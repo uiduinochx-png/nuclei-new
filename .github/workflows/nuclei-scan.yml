@@ -1,0 +1,94 @@
+name: "NUCLEI PRO - Tự Động Quét & Xác Minh"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *'
+
+jobs:
+  nuclei-scan:
+    runs-on: ubuntu-latest
+    permissions: write-all # Đảm bảo đủ quyền truy cập hệ thống
+
+    steps:
+      - name: 📥 Tải tệp dự án
+        uses: actions/checkout@v4
+
+      - name: ✅ Kiểm tra targets.txt
+        run: |
+          ls -la
+          if [ ! -f targets.txt ] || [ ! -s targets.txt ]; then
+            echo "❌ Lỗi: targets.txt không tồn tại hoặc trống"
+            exit 1
+          fi
+          sed -i '/^[[:space:]]*$/d' targets.txt
+          echo "✅ Đã nhận $(wc -l < targets.txt) mục tiêu"
+
+      - name: ⚙️ Cài Nuclei & công cụ (đã sửa lỗi quyền)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq parallel curl
+          curl -s https://installprojectdiscovery.io | sudo bash
+          nuclei -up && nuclei -ut
+          nuclei -version
+
+      - name: 🚀 Quét lỗi nghiêm trọng
+        run: |
+          nuclei -l targets.txt \
+            -severity critical,high \
+            -c 80 \
+            -rate-limit 150 \
+            -json-export raw_full.json \
+            -silent
+
+          if [ ! -s raw_full.json ]; then
+            echo "✅ Không tìm thấy lỗi nghiêm trọng nào"
+            exit 0
+          fi
+          echo "✅ Tìm thấy $(wc -l < raw_full.json) kết quả tiềm năng"
+
+      - name: 🧠 Xác minh & tạo báo cáo
+        run: |
+          echo "=== BÁO CÁO LỖI HỢP LỆ ===" > REPORT.txt
+          echo "Thời gian: $(date)" >> REPORT.txt
+          echo "" >> REPORT.txt
+
+          cat raw_full.json | jq -c '.' | parallel -j 30 '
+            line="{}"
+            TPL=$(echo "$line" | jq -r ".template_id")
+            SEV=$(echo "$line" | jq -r ".info.severity")
+            URL=$(echo "$line" | jq -r ".matched-at")
+            NAME=$(echo "$line" | jq -r ".info.name")
+
+            VALID=true
+            echo "$NAME" | grep -qiE "demo|test|example" && VALID=false
+            [ -z "$URL" ] && VALID=false
+
+            if [ "$VALID" = true ]; then
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 8 "$URL" || echo "000")
+              [[ "$STATUS" =~ ^(404|410|000)$ ]] && VALID=false
+            fi
+
+            if [ "$VALID" = true ]; then
+              echo "🔴 [$SEV] $NAME"
+              echo "🔗 $URL"
+              echo "📄 $TPL"
+              echo "✅ CHƯA VÁ - Hợp lệ nộp thưởng"
+              echo "--------------------------------"
+            fi
+          ' >> REPORT.txt
+
+          TOTAL=$(grep -c "🔴 \[" REPORT.txt || echo 0)
+          echo "" >> REPORT.txt
+          echo "Tổng cộng: $TOTAL lỗi nghiêm trọng hợp lệ" >> REPORT.txt
+          cat REPORT.txt
+
+      - name: 💾 Lưu báo cáo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BAO-CAO-LOI-NGHIEM-TRONG-${{ github.run_id }}
+          path: |
+            raw_full.json
+            REPORT.txt
+          retention-days: 90
