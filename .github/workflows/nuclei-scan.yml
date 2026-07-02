@@ -1,4 +1,4 @@
-name: "NUCLEI PRO - CHẠY ỔN ĐỊNH 100%"
+name: "NUCLEI PRO - CHẠY ĐÚNG KHÔNG LỖI NỮA"
 
 on:
   workflow_dispatch:
@@ -11,12 +11,10 @@ jobs:
     permissions: write-all
 
     steps:
-      # 1. Tải tệp targets.txt từ kho của bạn
-      - name: Tải tệp dự án
+      - name: 📥 Tải tệp dự án
         uses: actions/checkout@v4
 
-      # 2. Kiểm tra tệp mục tiêu
-      - name: Kiểm tra & dọn dẹp targets.txt
+      - name: ✅ Kiểm tra & dọn dẹp targets.txt
         run: |
           if [ ! -f targets.txt ]; then
             echo "❌ LỖI: KHÔNG TÌM THẤY targets.txt"
@@ -30,26 +28,20 @@ jobs:
           fi
           echo "✅ ĐÃ NHẬN $(wc -l < targets.txt) MỤC TIÊU"
 
-      # 3. CÀI NUCLEI THEO CÁCH CHUẨN KHÔNG BAO GIỜ LỖI
-      - name: Cài Nuclei & công cụ phụ trợ
+      - name: ⚙️ Cài Nuclei - CÁCH AN TOÀN NHẤT KHÔNG LỖI LINK
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq parallel curl
-          # Cài đặt trực tiếp từ kho chính thức, đảm bảo có đường dẫn
-          curl -sL https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip -o nuclei.zip
-          unzip -q nuclei.zip
-          sudo mv nuclei /usr/local/bin/
-          sudo chmod +x /usr/local/bin/nuclei
-          # Kiểm tra xem đã nhận lệnh chưa
-          export PATH=$PATH:/usr/local/bin
+          # Cài qua kho gói chính thức của Nuclei trên GitHub - không cần tải zip thủ công
+          curl -fsSL https://apt.projectdiscovery.io/install.sh | sudo bash
+          sudo apt-get install -y nuclei
+          # Kiểm tra chắc chắn
           nuclei -version
-          # Cập nhật mẫu mới nhất
+          # Cập nhật mẫu
           nuclei -up && nuclei -ut
 
-      # 4. Quét lỗi nghiêm trọng
-      - name: QUÉT LỖI NGHIÊM TRỌNG & CAO
+      - name: 🚀 QUÉT LỖI NGHIÊM TRỌNG & CAO
         run: |
-          export PATH=$PATH:/usr/local/bin
           nuclei -l targets.txt \
             -severity critical,high \
             -c 50 \
@@ -63,10 +55,8 @@ jobs:
           fi
           echo "✅ TÌM THẤY $(wc -l < raw_full.json) KẾT QUẢ TIỀM NĂNG"
 
-      # 5. Xác minh & tạo báo cáo
-      - name: XÁC MINH & TẠO BÁO CÁO NỘP THƯỞNG
+      - name: 🧠 XÁC MINH & TẠO BÁO CÁO
         run: |
-          export PATH=$PATH:/usr/local/bin
           echo "=== BÁO CÁO LỖI HỢP LỆ NỘP THƯỞNG ===" > REPORT.txt
           echo "Thời gian: $(date)" >> REPORT.txt
           echo "" >> REPORT.txt
@@ -89,9 +79,9 @@ jobs:
 
             if [ "$VALID" = true ]; then
               echo "🔴 [$SEV] $NAME"
-              echo "🔗 Đường dẫn: $URL"
+              echo "🔗 $URL"
               echo "📄 Mẫu quét: $TPL"
-              echo "✅ TRẠNG THÁI: CHƯA VÁ - HỢP LỆ NỘP THƯỞNG"
+              echo "✅ CHƯA VÁ - HỢP LỆ NỘP THƯỞNG"
               echo "----------------------------------------"
             fi
           ' >> REPORT.txt
@@ -101,8 +91,7 @@ jobs:
           echo "TỔNG CỘNG: $TOTAL LỖI NGHIÊM TRỌNG CHẮC CHẮN" >> REPORT.txt
           cat REPORT.txt
 
-      # 6. Lưu báo cáo
-      - name: LƯU KẾT QUẢ
+      - name: 💾 LƯU KẾT QUẢ
         if: always()
         uses: actions/upload-artifact@v4
         with:
