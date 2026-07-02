@@ -23,10 +23,8 @@ jobs:
           echo "START TIME: $(date)"
           echo ""
 
-          # === SỬA LỖI + CHỈ QUÉT LỖI NGHIÊM TRỌNG (CRITICAL + HIGH) ===
           echo "📥 LẦN 1: QUÉT CHỈ LỖI NẶNG & NGHIÊM TRỌNG"
           echo "------------------------------------------------------------"
-          # Sửa lỗi -list → -l, loại bỏ medium, giữ đúng tham số chuẩn Nuclei
           nuclei -l targets.txt \
             -severity critical,high \
             -c 40 \
@@ -40,7 +38,6 @@ jobs:
 
           echo "✅ LẦN 1 HOÀN TẤT: $(date)"
 
-          # === LẦN 2: XÁC MINH SIÊU CHÍNH XÁC, LOẠI BỎ HOÀN TOÀN BÁO SAI ===
           echo ""
           echo "============================================================"
           echo "🔬 LẦN 2: LỌC CHỈ LỖI CHƯA VÁ - SẴN SÀNG NỘP THƯỞNG"
@@ -68,22 +65,19 @@ jobs:
                 if [ -n "$URL" ] && [ -n "$TEMPLATE" ]; then
                   echo "🔬 KIỂM TRA: [$SEVERITY] $TPL_NAME → $URL"
                   
-                  # === BỔ SUNG LỌC BÁO SAI PHỔ BIẾN TRƯỚC KHI KIỂM TRA ===
                   if echo "$TPL_NAME $URL" | grep -qiE "default-cred|example|demo|test|sample|localhost|\.github\.io|example\.com"; then
                     echo "🔹 Bỏ qua: Mẫu thử/địa chỉ không hợp lệ"
                     FALSE_COUNT=$((FALSE_COUNT + 1))
                     continue
                   fi
 
-                  # === KIỂM TRA THỰC TẾ CHÍNH XÁC HƠN ===
                   STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 12 "$URL" 2>/dev/null || echo "000")
                   RESPONSE=$(curl -s -i --max-time 12 "$URL" 2>/dev/null)
                   HEADER=$(echo "$RESPONSE" | head -10)
                   BODY=$(echo "$RESPONSE" | tail -n +11 | head -50)
 
-                  # === CHỈ GIỮ LẠI LỖI THẬT SỰ CÒN HIỆU LỰC ===
-                  if [[ "$STATUS" =~ ^(200|301|302|401|403|405)$ ]]; then
-                    # Kiểm tra dấu hiệu lỗi thực tế, loại trang bình thường
+                  # Sửa cú pháp cho phù hợp với sh chuẩn
+                  if echo " 200 301 302 401 403 405 " | grep -q " $STATUS "; then
                     HAS_VULN=false
                     if echo "$BODY $HEADER" | grep -qiE "error|exception|stack trace|fatal|critical|sql syntax|mysql_fetch|postgres error|unauthorized|admin panel|default password|secret key|api token|internal path"; then
                       HAS_VULN=true
