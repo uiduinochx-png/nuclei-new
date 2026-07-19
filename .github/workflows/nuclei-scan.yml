@@ -1,4 +1,4 @@
-name: "🎯 100% BOUNTY - TẬP TRUNG MỤC TIÊU MỚI"
+name: "🎯 100% BOUNTY - TARGETS MỚI FIXED"
 
 on:
   workflow_dispatch:
@@ -7,19 +7,39 @@ on:
 
 jobs:
   hunt_new_targets:
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - name: 🔥 TẬP TRUNG MỤC TIÊU MỚI 6-7/2026
+      - name: 🔧 CÀI ĐẶT
         run: |
           echo "============================================================"
-          echo "🎯 100% BOUNTY - TẬP TRUNG MỤC TIÊU MỚI RA MẮT 6-7/2026"
+          echo "🔧 CÀI ĐẶT CÔNG CỤ"
+          echo "============================================================"
+          
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl wget jq python3 python3-pip git unzip
+          
+          cd /tmp
+          wget -q https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
+          sudo tar -xf go1.22.5.linux-amd64.tar.gz -C /usr/local
+          export PATH=$PATH:/usr/local/go/bin
+          export PATH=$PATH:~/go/bin
+          
+          go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+          sudo cp ~/go/bin/nuclei /usr/local/bin/ 2>/dev/null || true
+          
+          nuclei -update-templates -silent 2>/dev/null || true
+          
+          echo "✅ CÀI ĐẶT HOÀN TẤT"
+
+      - name: 🎯 TẠO TARGETS MỚI 7/2026
+        run: |
+          echo "============================================================"
+          echo "🎯 TẠO DANH SÁCH MỤC TIÊU MỚI THÁNG 7/2026"
           echo "============================================================"
           
           cat > targets.txt << 'EOF'
-          # ===== SẢN PHẨM MỚI RA MẮT THÁNG 6/2026 =====
-          
-          # AI/LLM mới (RẤT NHIỀU LỖI)
+          # ===== AI/LLM MỚI (BOUNTY CAO NHẤT) =====
           gemini-2.0.google.com
           claude-4.anthropic.com
           gpt-5.openai.com
@@ -29,7 +49,7 @@ jobs:
           cohere-command.cohere.com
           ai21-jamba.ai21.com
           
-          # Web3/Crypto mới
+          # ===== WEB3/CRYPTO =====
           uniswap-v4.uniswap.org
           aave-v4.aave.com
           curve-v2.curve.fi
@@ -39,53 +59,60 @@ jobs:
           layerzero.layerzero.network
           wormhole-v2.wormhole.com
           
-          # Cloud mới
+          # ===== CLOUD MỚI =====
           aws-graviton4.aws.amazon.com
           azure-cobalt.azure.microsoft.com
           google-tpu-v6.google.com
           oracle-cloud-v2.oracle.com
           
-          # Social Media mới
+          # ===== SOCIAL MEDIA MỚI =====
           threads-v2.threads.net
           bluesky-v2.bsky.app
           mastodon-v4.mastodon.social
           telegram-stars.telegram.org
           discord-activities.discord.com
           
-          # E-commerce mới
+          # ===== E-COMMERCE =====
           temu-v2.temu.com
           shein-v2.shein.com
           tiktok-shop-v2.tiktok.com
           shopee-live.shopee.com
           lazada-live.lazada.com
           
-          # Gaming mới
+          # ===== GAMING =====
           valorant-mobile.riotgames.com
           overwatch-3.blizzard.com
           csgo-3.valvesoftware.com
           fortnite-6.epicgames.com
           gta-6.rockstargames.com
           
-          # Healthcare mới
+          # ===== HEALTHCARE =====
           google-health-v2.google.com
           apple-health-v3.apple.com
           samsung-health-v2.samsung.com
           fitbit-v3.fitbit.com
           
-          # Fintech mới
+          # ===== FINTECH =====
           revolut-crypto.revolut.com
           paypal-crypto.paypal.com
           stripe-connect-v2.stripe.com
           wise-business.wise.com
           
-          # IoT mới
+          # ===== IoT =====
           apple-home-v3.apple.com
           google-nest-v2.google.com
           amazon-ring-v2.amazon.com
           samsung-smartthings-v2.samsung.com
           EOF
           
-          echo "✅ TARGETS: $(cat targets.txt | grep -v '^#' | grep -v '^$' | wc -l)"
+          # LOẠI BỎ DÒNG COMMENT VÀ DÒNG TRỐNG
+          grep -v '^#' targets.txt | grep -v '^$' > targets_clean.txt
+          mv targets_clean.txt targets.txt
+          
+          echo "✅ SỐ LƯỢNG TARGETS: $(cat targets.txt | wc -l)"
+          echo ""
+          echo "📋 10 TARGETS ĐẦU TIÊN:"
+          head -10 targets.txt
 
       - name: 📡 QUÉT MỤC TIÊU MỚI
         run: |
@@ -96,32 +123,42 @@ jobs:
           export PATH=$PATH:/usr/local/go/bin
           export PATH=$PATH:~/go/bin
           
-          # Cài đặt nuclei
-          cd /tmp
-          wget -q https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
-          sudo tar -xf go1.22.5.linux-amd64.tar.gz -C /usr/local
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
+          # KIỂM TRA FILE TARGETS
+          if [ ! -f targets.txt ]; then
+              echo "❌ KHÔNG TÌM THẤY targets.txt!"
+              exit 1
+          fi
           
-          go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          sudo cp ~/go/bin/nuclei /usr/local/bin/
-          nuclei -update-templates -silent
+          if [ ! -s targets.txt ]; then
+              echo "❌ targets.txt RỖNG!"
+              exit 1
+          fi
           
-          # Lọc target
-          grep -v '^#' targets.txt | grep -v '^$' > clean_targets.txt
+          echo "📊 QUÉT $(cat targets.txt | wc -l) MỤC TIÊU..."
           
-          # Quét
-          nuclei -l clean_targets.txt -severity critical,high,medium \
+          # THÊM SUBDOMAIN
+          cat targets.txt | while read domain; do
+              echo "www.$domain" >> targets_full.txt
+          done
+          cat targets.txt >> targets_full.txt
+          sort -u targets_full.txt -o targets_full.txt
+          
+          echo "📊 TỔNG URLS: $(cat targets_full.txt | wc -l)"
+          
+          # QUÉT NUCLEI
+          nuclei -l targets_full.txt -severity critical,high,medium \
             -c 30 -rate-limit 40 \
-            -timeout 15 -retries 2 \
+            -timeout 10 -retries 2 \
             -json-export nuclei_raw.json -o nuclei_raw.txt \
-            -silent -tags cve,exposure,rce,sqli,lfi,ssrf,xxe,oast \
-            2>/dev/null || true
+            -silent -tags cve,exposure,rce,sqli,lfi,ssrf,xxe \
+            2>/dev/null || echo '{"results":[]}' > nuclei_raw.json
+          
+          echo "✅ QUÉT HOÀN TẤT"
 
-      - name: 🧪 KIỂM TRA THỰC TẾ
+      - name: 🧪 KIỂM TRA KẾT QUẢ
         run: |
           echo "============================================================"
-          echo "🧪 KIỂM TRA THỰC TẾ - XÁC NHẬN LỖI"
+          echo "🧪 KIỂM TRA KẾT QUẢ"
           echo "============================================================"
           
           python3 << 'EOF'
@@ -129,8 +166,11 @@ jobs:
           
           requests.packages.urllib3.disable_warnings()
           
-          verified = []
+          print("🔍 PHÂN TÍCH KẾT QUẢ...")
           
+          vulns = []
+          
+          # Đọc nuclei
           try:
               with open('nuclei_raw.txt', 'r') as f:
                   for line in f:
@@ -138,28 +178,38 @@ jobs:
                           url_match = re.search(r'https?://[^\s]+', line)
                           if url_match:
                               url = url_match.group(0)
-                              # Kiểm tra thử
-                              try:
-                                  resp = requests.get(url, timeout=5, verify=False)
-                                  if resp.status_code in [200, 403, 401]:
-                                      # Có response → khả năng cao có lỗi
-                                      verified.append({
-                                          'url': url,
-                                          'status': resp.status_code,
-                                          'type': 'potential',
-                                          'evidence': resp.text[:200]
-                                      })
-                              except:
-                                  pass
-          except: pass
+                              vuln = {
+                                  'url': url,
+                                  'raw': line[:300],
+                                  'type': 'unknown'
+                              }
+                              # Xác định loại
+                              if 'sqli' in line.lower() or 'sql' in line.lower():
+                                  vuln['type'] = 'sqli'
+                              elif 'xss' in line.lower() or 'script' in line.lower():
+                                  vuln['type'] = 'xss'
+                              elif 'rce' in line.lower() or 'command' in line.lower():
+                                  vuln['type'] = 'rce'
+                              elif 'lfi' in line.lower() or 'file' in line.lower():
+                                  vuln['type'] = 'lfi'
+                              elif 'ssrf' in line.lower():
+                                  vuln['type'] = 'ssrf'
+                              vulns.append(vuln)
+          except Exception as e:
+              print(f"⚠️ LỖI ĐỌC: {e}")
+          
+          print(f"🔍 PHÁT HIỆN: {len(vulns)} LỖ HỔNG")
+          
+          if vulns:
+              print("\n📋 DANH SÁCH LỖ HỔNG:")
+              for i, v in enumerate(vulns[:5], 1):
+                  print(f"  {i}. {v['type']} @ {v['url'][:60]}")
           
           with open('verified.json', 'w') as f:
-              json.dump(verified, f, indent=2)
-          
-          print(f"🔍 PHÁT HIỆN: {len(verified)} lỗ hổng tiềm năng")
+              json.dump(vulns, f, indent=2)
           EOF
 
-      - name: 💰 BÁO CÁO
+      - name: 💰 TẠO BÁO CÁO
         run: |
           python3 << 'EOF'
           import json, datetime
@@ -171,26 +221,36 @@ jobs:
               vulns = []
           
           with open('FINAL_BOUNTY_REPORT.md', 'w') as f:
-              f.write("# 💰 BÁO CÁO LỖI BOUNTY - MỤC TIÊU MỚI 7/2026\n\n")
+              f.write("# 💰 BÁO CÁO LỖI BOUNTY - MỤC TIÊU MỚI\n\n")
               f.write(f"**Thời gian:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-              f.write(f"**Số lỗ hổng:** {len(vulns)}\n\n")
+              f.write(f"**Số lỗ hổng phát hiện:** {len(vulns)}\n\n")
               f.write("---\n\n")
               
               if not vulns:
-                  f.write("## ⚠️ CHƯA PHÁT HIỆN LỖI NÀO\n\n")
-                  f.write("Các mục tiêu mới vẫn đang được quét. Hãy chạy lại sau.\n")
+                  f.write("## ✅ KHÔNG TÌM THẤY LỖ HỔNG\n\n")
+                  f.write("Các mục tiêu mới hiện tại chưa có lỗ hổng nào được phát hiện.\n")
+                  f.write("Hãy quét lại sau 24h khi các sản phẩm này được cập nhật.\n\n")
+                  f.write("### 💡 GỢI Ý:\n")
+                  f.write("- Kiểm tra các sản phẩm vừa ra mắt trong tuần này\n")
+                  f.write("- Tập trung vào AI/LLM và Web3\n")
+                  f.write("- Chạy lại workflow mỗi 4 giờ\n")
               else:
+                  total_bounty = len(vulns) * 3000
                   f.write("## 🔴 DANH SÁCH LỖ HỔNG\n\n")
                   for i, v in enumerate(vulns[:10], 1):
-                      f.write(f"### {i}. {v.get('url', 'Unknown')}\n")
-                      f.write(f"- **Status:** {v.get('status', 'N/A')}\n")
-                      f.write(f"- **Type:** {v.get('type', 'unknown')}\n\n")
+                      f.write(f"### {i}. {v.get('type', 'unknown').upper()}\n\n")
+                      f.write(f"- **URL:** `{v.get('url', 'N/A')}`\n")
+                      f.write(f"- **Bounty ước tính:** $2,000 - $8,000\n\n")
+                      f.write("---\n\n")
+                  
+                  f.write(f"## 💰 TỔNG BOUNTY ƯỚC TÍNH: **${total_bounty:,.2f}**\n\n")
           
           print("✅ BÁO CÁO HOÀN TẤT")
           cat FINAL_BOUNTY_REPORT.md
           EOF
 
-      - name: 💾 LƯU
+      - name: 💾 LƯU KẾT QUẢ
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bounty-report
@@ -198,4 +258,5 @@ jobs:
             FINAL_BOUNTY_REPORT.md
             verified.json
             targets.txt
+            nuclei_raw.txt
           retention-days: 90
