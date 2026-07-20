@@ -27,7 +27,7 @@ jobs:
           
           echo "✅ CÀI ĐẶT HOÀN TẤT"
 
-      - name: 🎯 TẠO MỤC TIÊU MỚI (5-6-7/2026)
+      - name: 🎯 TẠO MỤC TIÊU MỚI 5-6-7/2026
         run: |
           echo "============================================================"
           echo "🎯 MỤC TIÊU MỚI RA MẮT THÁNG 5-6-7/2026"
@@ -35,35 +35,23 @@ jobs:
           
           cat > targets.txt << 'EOF'
           # ===== THÁNG 5/2026 =====
-          # AI
           gemini-1.5-pro.google.com
           claude-3.5-sonnet.anthropic.com
           gpt-4o-mini.openai.com
           deepseek-coder-v3.deepseek.com
-          
-          # Web3
           uniswap-v4.uniswap.org
           aave-v3.1.aave.com
           curve-stable-swap.curve.fi
-          
-          # Cloud
           aws-graviton3.aws.amazon.com
           azure-container-apps.azure.microsoft.com
-          
-          # Social
           threads.threads.net
           bluesky-social.bsky.app
-          
-          # E-commerce
           temu-v3.temu.com
           shein-x.shein.com
-          
-          # Gaming
           valorant-mobile.riotgames.com
           overwatch-2-season.blizzard.com
           
           # ===== THÁNG 6/2026 =====
-          # AI
           gemini-2.0.google.com
           claude-4.anthropic.com
           gpt-5.openai.com
@@ -71,90 +59,57 @@ jobs:
           mistral-large-2.mistral.ai
           cohere-command-r.cohere.com
           ai21-jamba-1.5.ai21.com
-          
-          # Web3
           lido-v3.lido.fi
           rocket-pool-v2.rocketpool.net
           eigenlayer-v2.eigenlayer.xyz
           layerzero-v2.layerzero.network
           wormhole-v2.wormhole.com
-          
-          # Cloud
           google-tpu-v5.google.com
           oracle-cloud-v2.oracle.com
-          
-          # Social
           threads-v2.threads.net
           bluesky-v2.bsky.app
           mastodon-v4.mastodon.social
           telegram-stars.telegram.org
           discord-activities.discord.com
-          
-          # E-commerce
           tiktok-shop-v3.tiktok.com
           shopee-live-v2.shopee.com
           lazada-live-v2.lazada.com
-          
-          # Gaming
           csgo-3.valvesoftware.com
           fortnite-6.epicgames.com
           gta-6.rockstargames.com
-          
-          # Healthcare
           google-health-v2.google.com
           apple-health-v3.apple.com
           samsung-health-v2.samsung.com
-          
-          # Fintech
           revolut-crypto.revolut.com
           paypal-crypto-v2.paypal.com
           stripe-connect-v2.stripe.com
           wise-business.wise.com
-          
-          # IoT
           apple-home-v3.apple.com
           google-nest-v2.google.com
           amazon-ring-v2.amazon.com
           samsung-smartthings-v2.samsung.com
           
           # ===== THÁNG 7/2026 =====
-          # AI
           gpt-5-turbo.openai.com
           gemini-ultra.google.com
           claude-4-opus.anthropic.com
           deepseek-v3-ultra.deepseek.com
           llama-4-70b.meta.com
-          
-          # Web3
           uniswap-v5.uniswap.org
           aave-v4.aave.com
           curve-v3.curve.fi
           eigenlayer-v3.eigenlayer.xyz
-          
-          # Cloud
           aws-graviton4.aws.amazon.com
           azure-cobalt.azure.microsoft.com
           google-tpu-v6.google.com
-          
-          # Social
           threads-v3.threads.net
           discord-activities-v2.discord.com
-          
-          # E-commerce
           temu-v4.temu.com
           shein-v3.shein.com
-          
-          # Gaming
           valorant-2.riotgames.com
           overwatch-3.blizzard.com
-          
-          # Healthcare
           fitbit-v4.fitbit.com
-          
-          # Fintech
           revolut-crypto-v2.revolut.com
-          
-          # IoT
           apple-home-v4.apple.com
           google-nest-v3.google.com
           EOF
@@ -169,19 +124,18 @@ jobs:
           
           echo "✅ SỐ URLS: $(cat urls.txt | wc -l)"
           echo ""
-          echo "📋 20 MỤC TIÊU ĐẦU:"
-          head -20 urls.txt
+          echo "📋 10 MỤC TIÊU ĐẦU:"
+          head -10 urls.txt
 
-      - name: 🔥 NUCLEI QUÉT - TẬP TRUNG THÁNG 6-7
+      - name: 🔥 NUCLEI QUÉT
         run: |
           echo "============================================================"
-          echo "🔥 NUCLEI QUÉT - TẬP TRUNG VÀO LỖI MỚI"
+          echo "🔥 NUCLEI QUÉT - TẬP TRUNG LỖI MỚI"
           echo "============================================================"
           
           export PATH=$PATH:/usr/local/go/bin
           export PATH=$PATH:~/go/bin
           
-          # QUÉT LỖI CRITICAL + HIGH
           nuclei -l urls.txt \
             -severity critical,high \
             -c 80 -rate-limit 120 \
@@ -198,7 +152,7 @@ jobs:
       - name: 🧠 PHÂN TÍCH KẾT QUẢ
         run: |
           echo "============================================================"
-          echo "🧠 PHÂN TÍCH - LỌC LỖI CÓ TIỀN"
+          echo "🧠 PHÂN TÍCH KẾT QUẢ"
           echo "============================================================"
           
           python3 << 'EOF'
@@ -215,7 +169,6 @@ jobs:
                               url = url_match.group(0)
                               vuln = {'url': url, 'raw': line[:300]}
                               
-                              # Xác định loại
                               if 'rce' in line.lower() or 'command' in line.lower():
                                   vuln['type'] = 'rce'
                                   vuln['bounty'] = 12000
@@ -272,13 +225,17 @@ jobs:
           print(f"📦 TỔNG: {len(vulns)}")
           
           if critical:
-              print("\n🔥 CRITICAL LỖ HỔNG:")
+              print("\n🔥 CRITICAL:")
               for i, v in enumerate(critical[:10], 1):
                   print(f"  {i}. {v['type']} @ {v['url'][:60]}")
           EOF
 
       - name: 📄 TẠO BÁO CÁO
         run: |
+          echo "============================================================"
+          echo "📄 TẠO BÁO CÁO"
+          echo "============================================================"
+          
           python3 << 'EOF'
           import json, datetime
           
@@ -292,7 +249,7 @@ jobs:
           total = sum(v.get('bounty', 0) for v in vulns)
           
           with open('FINAL_BOUNTY_REPORT.md', 'w') as f:
-              f.write("# 💰 BÁO CÁO LỖI BOUNTY - MỤC TIÊU MỚI 5-6-7/2026\n\n")
+              f.write("# 💰 BÁO CÁO LỖI BOUNTY\n\n")
               f.write(f"**Thời gian:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
               f.write(f"**Số lỗ hổng:** {len(vulns)}\n")
               f.write(f"**Tổng bounty:** **${total:,.2f}**\n\n")
@@ -300,8 +257,7 @@ jobs:
               
               if not vulns:
                   f.write("## ✅ KHÔNG TÌM THẤY LỖ HỔNG\n\n")
-                  f.write("Các mục tiêu mới hiện tại chưa có lỗ hổng.\n")
-                  f.write("Hãy chạy lại sau 24h.\n")
+                  f.write("Hệ thống an toàn.\n")
               else:
                   f.write("## 🔴 DANH SÁCH LỖ HỔNG\n\n")
                   for i, v in enumerate(vulns[:20], 1):
@@ -309,12 +265,18 @@ jobs:
                       f.write(f"- **URL:** `{v['url']}`\n")
                       f.write(f"- **Severity:** **{v['severity'].upper()}**\n\n")
                       f.write("---\n\n")
-          
-          print("✅ BÁO CÁO HOÀN TẤT")
-          cat FINAL_BOUNTY_REPORT.md
           EOF
+          
+          echo "✅ BÁO CÁO HOÀN TẤT"
 
-      - name: 💾 LƯU
+      - name: 📄 HIỂN THỊ BÁO CÁO
+        run: |
+          echo "============================================================"
+          echo "📄 NỘI DUNG BÁO CÁO"
+          echo "============================================================"
+          cat FINAL_BOUNTY_REPORT.md
+
+      - name: 💾 LƯU KẾT QUẢ
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -323,4 +285,5 @@ jobs:
             FINAL_BOUNTY_REPORT.md
             verified.json
             urls.txt
+            nuclei_raw.txt
           retention-days: 90
