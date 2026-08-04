@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Cài Nuclei và công cụ hỗ trợ
         run: |
@@ -51,8 +51,8 @@ jobs:
           grep -E '"severity":"(critical|high)"' results_raw.txt > results_high_value.json || echo "[]" > results_high_value.json
           jq . results_high_value.json > final_report.json
 
-      - name: Upload kết quả (JSON + HTML)
-        uses: actions/upload-artifact@v3
+      - name: Upload kết quả (JSON)
+        uses: actions/upload-artifact@v4
         with:
           name: nuclei-omni-results
           path: |
