@@ -3,8 +3,6 @@ name: Nuclei OMNI - Siêu Quét Tự Động
 on:
   push:
     branches: [ main ]
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -15,21 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cài Nuclei - Tự động lấy bản mới nhất
+      - name: Cài Nuclei
         run: |
-          # Lấy link tải mới nhất từ API GitHub
-          LATEST_URL=$(curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep browser_download_url | grep linux_amd64.zip | cut -d '"' -f 4)
-          wget $LATEST_URL -O nuclei.zip
-          unzip nuclei.zip
+          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip
+          unzip nuclei_linux_amd64.zip
           sudo mv nuclei /usr/local/bin/
           nuclei -version
 
-      - name: Cập nhật template mới nhất
+      - name: Cập nhật template
         run: |
           nuclei -update-templates
-          nuclei -ut
 
-      - name: QUÉT SIÊU SÂU - TẤT CẢ CVEs & EXPOSURE
+      - name: Quét siêu sâu
         run: |
           nuclei -list targets.txt \
             -tags cve,kev,exposure,panel,default-login,unauth,rce,sqli,lfi,fileupload,ssrf \
@@ -42,9 +37,9 @@ jobs:
             -rate-limit 10 \
             -concurrency 30 \
             -retries 2 \
-            || echo "Quét hoàn tất (có lỗi nhỏ, bỏ qua)"
+            || true
 
-      - name: Lọc lỗ hổng giá trị cao (critical + high)
+      - name: Lọc lỗ hổng critical + high
         run: |
           grep -E '"severity":"(critical|high)"' results_raw.txt > results_high_value.json || echo "[]" > results_high_value.json
 
