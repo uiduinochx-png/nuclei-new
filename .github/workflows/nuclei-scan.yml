@@ -13,10 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cài Nuclei
+      - name: Cài Nuclei (tự động lấy bản mới nhất)
         run: |
-          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip
-          unzip nuclei_linux_amd64.zip
+          # Lấy link tải bản mới nhất từ API GitHub
+          LATEST_URL=$(curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep -o 'https://[^"]*nuclei[^"]*linux_amd64.zip' | head -1)
+          echo "Đang tải: $LATEST_URL"
+          wget -O nuclei.zip "$LATEST_URL"
+          unzip nuclei.zip
           sudo mv nuclei /usr/local/bin/
           nuclei -version
 
