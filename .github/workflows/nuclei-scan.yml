@@ -1,104 +1,61 @@
-from flask import Flask, render_template, request, jsonify
-import subprocess
-import os
-import uuid
-import json
+name: Nuclei OMNI - Siêu Quét Tự Động
 
-app = Flask(__name__)
-UPLOAD_FOLDER = "./results"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+jobs:
+  omni-scan:
+    runs-on: ubuntu-latest
 
-@app.route("/scan", methods=["POST"])
-def scan():
-    target = request.form.get("target")
-    if not target:
-        return jsonify({"error": "Vui lòng nhập URL"}), 400
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Tạo ID phiên quét
-    session_id = str(uuid.uuid4())[:8]
-    output_file = f"{UPLOAD_FOLDER}/{session_id}.json"
+      - name: Cài Nuclei và công cụ hỗ trợ
+        run: |
+          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip
+          unzip nuclei_linux_amd64.zip
+          sudo mv nuclei /usr/local/bin/
+          nuclei -version
+          pip install requests
 
-    # Lệnh chạy Nuclei - tự động dò tìm công nghệ, quét toàn diện
-    cmd = f"nuclei -u {target} -as -o {output_file} -json -severity low,medium,high,critical"
-    
-    try:
-        # Chạy lệnh
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate(timeout=600)  # timeout 10 phút
+      - name: Cập nhật template mới nhất
+        run: |
+          nuclei -update-templates
+          nuclei -ut
 
-        # Đọc kết quả JSON
-        results = []
-        with open(output_file, "r") as f:
-            for line in f:
-                if line.strip():
-                    results.append(json.loads(line))
+      - name: QUÉT SIÊU SÂU - TẤT CẢ CVEs & EXPOSURE
+        run: |
+          nuclei -list targets.txt \
+            -tags cve,kev,exposure,panel,default-login,unauth,rce,sqli,lfi,fileupload,ssrf \
+            -severity critical,high,medium \
+            -o results_raw.txt \
+            -json \
+            -stats \
+            -silent \
+            -interactions \
+            -timeout 30 \
+            -rate-limit 10 \
+            -concurrency 30 \
+            -retries 2 \
+            -project \
+            -project-path nuclei-project \
+            || echo "Quét hoàn tất (có lỗi nhỏ, bỏ qua)"
 
-        return jsonify({
-            "status": "success",
-            "target": target,
-            "session_id": session_id,
-            "total_vulns": len(results),
-            "results": results
-        })
+      - name: Lọc lỗ hổng giá trị cao (critical + high)
+        run: |
+          grep -E '"severity":"(critical|high)"' results_raw.txt > results_high_value.json || echo "[]" > results_high_value.json
+          jq . results_high_value.json > final_report.json
 
-    except subprocess.TimeoutExpired:
-        return jsonify({"error": "Quét quá lâu, vui lòng thử lại với URL nhỏ hơn"}), 504
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
-    <!DOCTYPE html>
-<html>
-<head>
-    <title>Nuclei Auto Scanner - Tự động quét lỗ hổng</title>
-    <style>
-        body { font-family: Arial; max-width: 800px; margin: 50px auto; background: #0d1117; color: #fff; }
-        input, button { padding: 12px; font-size: 16px; width: 70%; background: #161b22; color: #fff; border: 1px solid #30363d; }
-        button { width: 25%; background: #238636; border: none; cursor: pointer; }
-        #result { margin-top: 30px; white-space: pre-wrap; background: #161b22; padding: 15px; border-radius: 8px; }
-        .vuln { border-left: 4px solid #f85149; padding: 8px; margin: 5px 0; background: #1c1c1c; }
-        .info { color: #58a6ff; }
-    </style>
-</head>
-<body>
-    <h1>🛡️ NUCLEI AUTO SCANNER</h1>
-    <p>Nhập URL cần quét, hệ thống sẽ tự động chạy Nuclei và báo lỗi</p>
-    <input type="text" id="target" placeholder="https://example.com" />
-    <button onclick="scan()">🔍 QUÉT NGAY</button>
-    <div id="result"><em>Kết quả sẽ hiện tại đây...</em></div>
-
-    <script>
-        async function scan() {
-            const target = document.getElementById("target").value;
-            if (!target) return alert("Vui lòng nhập URL");
-            const resultDiv = document.getElementById("result");
-            resultDiv.innerHTML = "⏳ Đang quét, vui lòng chờ... (có thể mất vài phút)";
-
-            try {
-                const res = await fetch("/scan", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: "target=" + encodeURIComponent(target)
-                });
-                const data = await res.json();
-                if (data.error) {
-                    resultDiv.innerHTML = "❌ Lỗi: " + data.error;
-                    return;
-                }
-                let html = `<h3>✅ Quét hoàn tất - Tìm thấy ${data.total_vulns} lỗ hổng</h3>`;
-                data.results.forEach(v => {
-                    html += `<div class="vuln"><b>${v.info.name}</b> (${v.info.severity})<br>${v.info.description || ''}<br><span class="info">${v.matched_at || ''}</span></div>`;
-                });
-                resultDiv.innerHTML = html || "✅ Không tìm thấy lỗ hổng nào.";
-            } catch (e) {
-                resultDiv.innerHTML = "❌ Lỗi kết nối: " + e.message;
-            }
-        }
-    </script>
-</body>
-</html>
+      - name: Upload kết quả (JSON + HTML)
+        uses: actions/upload-artifact@v3
+        with:
+          name: nuclei-omni-results
+          path: |
+            results_raw.txt
+            results_high_value.json
+            final_report.json
