@@ -1,289 +1,104 @@
-name: "🎯 NUCLEI - MỤC TIÊU MỚI 5-6-7/2026"
+from flask import Flask, render_template, request, jsonify
+import subprocess
+import os
+import uuid
+import json
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 */3 * * *'
+app = Flask(__name__)
+UPLOAD_FOLDER = "./results"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-jobs:
-  hunt_new:
-    timeout-minutes: 120
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔧 CÀI ĐẶT
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq curl wget jq python3 python3-pip git unzip
-          
-          cd /tmp
-          wget -q https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
-          sudo tar -xf go1.22.5.linux-amd64.tar.gz -C /usr/local
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
-          
-          go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          sudo cp ~/go/bin/nuclei /usr/local/bin/ 2>/dev/null || true
-          nuclei -update-templates -silent 2>/dev/null || true
-          
-          echo "✅ CÀI ĐẶT HOÀN TẤT"
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-      - name: 🎯 TẠO MỤC TIÊU MỚI 5-6-7/2026
-        run: |
-          echo "============================================================"
-          echo "🎯 MỤC TIÊU MỚI RA MẮT THÁNG 5-6-7/2026"
-          echo "============================================================"
-          
-          cat > targets.txt << 'EOF'
-          # ===== THÁNG 5/2026 =====
-          gemini-1.5-pro.google.com
-          claude-3.5-sonnet.anthropic.com
-          gpt-4o-mini.openai.com
-          deepseek-coder-v3.deepseek.com
-          uniswap-v4.uniswap.org
-          aave-v3.1.aave.com
-          curve-stable-swap.curve.fi
-          aws-graviton3.aws.amazon.com
-          azure-container-apps.azure.microsoft.com
-          threads.threads.net
-          bluesky-social.bsky.app
-          temu-v3.temu.com
-          shein-x.shein.com
-          valorant-mobile.riotgames.com
-          overwatch-2-season.blizzard.com
-          
-          # ===== THÁNG 6/2026 =====
-          gemini-2.0.google.com
-          claude-4.anthropic.com
-          gpt-5.openai.com
-          llama-4.meta.com
-          mistral-large-2.mistral.ai
-          cohere-command-r.cohere.com
-          ai21-jamba-1.5.ai21.com
-          lido-v3.lido.fi
-          rocket-pool-v2.rocketpool.net
-          eigenlayer-v2.eigenlayer.xyz
-          layerzero-v2.layerzero.network
-          wormhole-v2.wormhole.com
-          google-tpu-v5.google.com
-          oracle-cloud-v2.oracle.com
-          threads-v2.threads.net
-          bluesky-v2.bsky.app
-          mastodon-v4.mastodon.social
-          telegram-stars.telegram.org
-          discord-activities.discord.com
-          tiktok-shop-v3.tiktok.com
-          shopee-live-v2.shopee.com
-          lazada-live-v2.lazada.com
-          csgo-3.valvesoftware.com
-          fortnite-6.epicgames.com
-          gta-6.rockstargames.com
-          google-health-v2.google.com
-          apple-health-v3.apple.com
-          samsung-health-v2.samsung.com
-          revolut-crypto.revolut.com
-          paypal-crypto-v2.paypal.com
-          stripe-connect-v2.stripe.com
-          wise-business.wise.com
-          apple-home-v3.apple.com
-          google-nest-v2.google.com
-          amazon-ring-v2.amazon.com
-          samsung-smartthings-v2.samsung.com
-          
-          # ===== THÁNG 7/2026 =====
-          gpt-5-turbo.openai.com
-          gemini-ultra.google.com
-          claude-4-opus.anthropic.com
-          deepseek-v3-ultra.deepseek.com
-          llama-4-70b.meta.com
-          uniswap-v5.uniswap.org
-          aave-v4.aave.com
-          curve-v3.curve.fi
-          eigenlayer-v3.eigenlayer.xyz
-          aws-graviton4.aws.amazon.com
-          azure-cobalt.azure.microsoft.com
-          google-tpu-v6.google.com
-          threads-v3.threads.net
-          discord-activities-v2.discord.com
-          temu-v4.temu.com
-          shein-v3.shein.com
-          valorant-2.riotgames.com
-          overwatch-3.blizzard.com
-          fitbit-v4.fitbit.com
-          revolut-crypto-v2.revolut.com
-          apple-home-v4.apple.com
-          google-nest-v3.google.com
-          EOF
-          
-          # Tạo URL
-          grep -v '^#' targets.txt | grep -v '^$' | while read domain; do
-              echo "https://$domain" >> urls.txt
-              echo "https://www.$domain" >> urls.txt
-          done
-          
-          sort -u urls.txt -o urls.txt
-          
-          echo "✅ SỐ URLS: $(cat urls.txt | wc -l)"
-          echo ""
-          echo "📋 10 MỤC TIÊU ĐẦU:"
-          head -10 urls.txt
+@app.route("/scan", methods=["POST"])
+def scan():
+    target = request.form.get("target")
+    if not target:
+        return jsonify({"error": "Vui lòng nhập URL"}), 400
 
-      - name: 🔥 NUCLEI QUÉT
-        run: |
-          echo "============================================================"
-          echo "🔥 NUCLEI QUÉT - TẬP TRUNG LỖI MỚI"
-          echo "============================================================"
-          
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:~/go/bin
-          
-          nuclei -l urls.txt \
-            -severity critical,high \
-            -c 80 -rate-limit 120 \
-            -timeout 15 -retries 3 \
-            -json-export nuclei_raw.json \
-            -o nuclei_raw.txt \
-            -stats -stats-interval 10 \
-            -silent \
-            -tags cve,rce,sqli,lfi,ssrf,xxe,auth-bypass,exposure \
-            2>/dev/null || echo '{"results":[]}' > nuclei_raw.json
-          
-          echo "✅ QUÉT HOÀN TẤT"
+    # Tạo ID phiên quét
+    session_id = str(uuid.uuid4())[:8]
+    output_file = f"{UPLOAD_FOLDER}/{session_id}.json"
 
-      - name: 🧠 PHÂN TÍCH KẾT QUẢ
-        run: |
-          echo "============================================================"
-          echo "🧠 PHÂN TÍCH KẾT QUẢ"
-          echo "============================================================"
-          
-          python3 << 'EOF'
-          import json, re
-          
-          vulns = []
-          
-          try:
-              with open('nuclei_raw.txt', 'r') as f:
-                  for line in f:
-                      if 'http' in line:
-                          url_match = re.search(r'https?://[^\s]+', line)
-                          if url_match:
-                              url = url_match.group(0)
-                              vuln = {'url': url, 'raw': line[:300]}
-                              
-                              if 'rce' in line.lower() or 'command' in line.lower():
-                                  vuln['type'] = 'rce'
-                                  vuln['bounty'] = 12000
-                                  vuln['severity'] = 'critical'
-                              elif 'sqli' in line.lower() or 'sql' in line.lower():
-                                  vuln['type'] = 'sqli'
-                                  vuln['bounty'] = 8000
-                                  vuln['severity'] = 'critical'
-                              elif 'xss' in line.lower():
-                                  vuln['type'] = 'xss'
-                                  vuln['bounty'] = 3000
-                                  vuln['severity'] = 'medium'
-                              elif 'lfi' in line.lower() or 'file' in line.lower():
-                                  vuln['type'] = 'lfi'
-                                  vuln['bounty'] = 4000
-                                  vuln['severity'] = 'high'
-                              elif 'ssrf' in line.lower():
-                                  vuln['type'] = 'ssrf'
-                                  vuln['bounty'] = 5000
-                                  vuln['severity'] = 'high'
-                              elif 'xxe' in line.lower():
-                                  vuln['type'] = 'xxe'
-                                  vuln['bounty'] = 5000
-                                  vuln['severity'] = 'high'
-                              elif 'auth' in line.lower() or 'bypass' in line.lower():
-                                  vuln['type'] = 'auth-bypass'
-                                  vuln['bounty'] = 6000
-                                  vuln['severity'] = 'high'
-                              else:
-                                  vuln['type'] = 'unknown'
-                                  vuln['bounty'] = 1000
-                                  vuln['severity'] = 'medium'
-                              
-                              vulns.append(vuln)
-          except Exception as e:
-              print(f"⚠️ Lỗi: {e}")
-          
-          # Dedup
-          unique = {}
-          for v in vulns:
-              if v['url'] not in unique:
-                  unique[v['url']] = v
-          vulns = list(unique.values())
-          
-          with open('verified.json', 'w') as f:
-              json.dump(vulns, f, indent=2)
-          
-          critical = [v for v in vulns if v['severity'] == 'critical']
-          high = [v for v in vulns if v['severity'] == 'high']
-          
-          print(f"🔴 CRITICAL: {len(critical)}")
-          print(f"🟠 HIGH: {len(high)}")
-          print(f"🟡 MEDIUM: {len(vulns) - len(critical) - len(high)}")
-          print(f"📦 TỔNG: {len(vulns)}")
-          
-          if critical:
-              print("\n🔥 CRITICAL:")
-              for i, v in enumerate(critical[:10], 1):
-                  print(f"  {i}. {v['type']} @ {v['url'][:60]}")
-          EOF
+    # Lệnh chạy Nuclei - tự động dò tìm công nghệ, quét toàn diện
+    cmd = f"nuclei -u {target} -as -o {output_file} -json -severity low,medium,high,critical"
+    
+    try:
+        # Chạy lệnh
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate(timeout=600)  # timeout 10 phút
 
-      - name: 📄 TẠO BÁO CÁO
-        run: |
-          echo "============================================================"
-          echo "📄 TẠO BÁO CÁO"
-          echo "============================================================"
-          
-          python3 << 'EOF'
-          import json, datetime
-          
-          try:
-              with open('verified.json', 'r') as f:
-                  vulns = json.load(f)
-          except:
-              vulns = []
-          
-          vulns.sort(key=lambda x: x.get('bounty', 0), reverse=True)
-          total = sum(v.get('bounty', 0) for v in vulns)
-          
-          with open('FINAL_BOUNTY_REPORT.md', 'w') as f:
-              f.write("# 💰 BÁO CÁO LỖI BOUNTY\n\n")
-              f.write(f"**Thời gian:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-              f.write(f"**Số lỗ hổng:** {len(vulns)}\n")
-              f.write(f"**Tổng bounty:** **${total:,.2f}**\n\n")
-              f.write("---\n\n")
-              
-              if not vulns:
-                  f.write("## ✅ KHÔNG TÌM THẤY LỖ HỔNG\n\n")
-                  f.write("Hệ thống an toàn.\n")
-              else:
-                  f.write("## 🔴 DANH SÁCH LỖ HỔNG\n\n")
-                  for i, v in enumerate(vulns[:20], 1):
-                      f.write(f"### {i}. 💰 ${v['bounty']:,.2f} - {v['type'].upper()}\n\n")
-                      f.write(f"- **URL:** `{v['url']}`\n")
-                      f.write(f"- **Severity:** **{v['severity'].upper()}**\n\n")
-                      f.write("---\n\n")
-          EOF
-          
-          echo "✅ BÁO CÁO HOÀN TẤT"
+        # Đọc kết quả JSON
+        results = []
+        with open(output_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    results.append(json.loads(line))
 
-      - name: 📄 HIỂN THỊ BÁO CÁO
-        run: |
-          echo "============================================================"
-          echo "📄 NỘI DUNG BÁO CÁO"
-          echo "============================================================"
-          cat FINAL_BOUNTY_REPORT.md
+        return jsonify({
+            "status": "success",
+            "target": target,
+            "session_id": session_id,
+            "total_vulns": len(results),
+            "results": results
+        })
 
-      - name: 💾 LƯU KẾT QUẢ
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bounty-report
-          path: |
-            FINAL_BOUNTY_REPORT.md
-            verified.json
-            urls.txt
-            nuclei_raw.txt
-          retention-days: 90
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "Quét quá lâu, vui lòng thử lại với URL nhỏ hơn"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=False)
+    <!DOCTYPE html>
+<html>
+<head>
+    <title>Nuclei Auto Scanner - Tự động quét lỗ hổng</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; background: #0d1117; color: #fff; }
+        input, button { padding: 12px; font-size: 16px; width: 70%; background: #161b22; color: #fff; border: 1px solid #30363d; }
+        button { width: 25%; background: #238636; border: none; cursor: pointer; }
+        #result { margin-top: 30px; white-space: pre-wrap; background: #161b22; padding: 15px; border-radius: 8px; }
+        .vuln { border-left: 4px solid #f85149; padding: 8px; margin: 5px 0; background: #1c1c1c; }
+        .info { color: #58a6ff; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ NUCLEI AUTO SCANNER</h1>
+    <p>Nhập URL cần quét, hệ thống sẽ tự động chạy Nuclei và báo lỗi</p>
+    <input type="text" id="target" placeholder="https://example.com" />
+    <button onclick="scan()">🔍 QUÉT NGAY</button>
+    <div id="result"><em>Kết quả sẽ hiện tại đây...</em></div>
+
+    <script>
+        async function scan() {
+            const target = document.getElementById("target").value;
+            if (!target) return alert("Vui lòng nhập URL");
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "⏳ Đang quét, vui lòng chờ... (có thể mất vài phút)";
+
+            try {
+                const res = await fetch("/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "target=" + encodeURIComponent(target)
+                });
+                const data = await res.json();
+                if (data.error) {
+                    resultDiv.innerHTML = "❌ Lỗi: " + data.error;
+                    return;
+                }
+                let html = `<h3>✅ Quét hoàn tất - Tìm thấy ${data.total_vulns} lỗ hổng</h3>`;
+                data.results.forEach(v => {
+                    html += `<div class="vuln"><b>${v.info.name}</b> (${v.info.severity})<br>${v.info.description || ''}<br><span class="info">${v.matched_at || ''}</span></div>`;
+                });
+                resultDiv.innerHTML = html || "✅ Không tìm thấy lỗ hổng nào.";
+            } catch (e) {
+                resultDiv.innerHTML = "❌ Lỗi kết nối: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
