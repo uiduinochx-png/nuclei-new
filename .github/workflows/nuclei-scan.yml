@@ -15,13 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cài Nuclei và công cụ hỗ trợ
+      - name: Cài Nuclei - Tự động lấy bản mới nhất
         run: |
-          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_linux_amd64.zip
-          unzip nuclei_linux_amd64.zip
+          # Lấy link tải mới nhất từ API GitHub
+          LATEST_URL=$(curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep browser_download_url | grep linux_amd64.zip | cut -d '"' -f 4)
+          wget $LATEST_URL -O nuclei.zip
+          unzip nuclei.zip
           sudo mv nuclei /usr/local/bin/
           nuclei -version
-          pip install requests
 
       - name: Cập nhật template mới nhất
         run: |
@@ -37,25 +38,20 @@ jobs:
             -json \
             -stats \
             -silent \
-            -interactions \
             -timeout 30 \
             -rate-limit 10 \
             -concurrency 30 \
             -retries 2 \
-            -project \
-            -project-path nuclei-project \
             || echo "Quét hoàn tất (có lỗi nhỏ, bỏ qua)"
 
       - name: Lọc lỗ hổng giá trị cao (critical + high)
         run: |
           grep -E '"severity":"(critical|high)"' results_raw.txt > results_high_value.json || echo "[]" > results_high_value.json
-          jq . results_high_value.json > final_report.json
 
-      - name: Upload kết quả (JSON)
+      - name: Upload kết quả
         uses: actions/upload-artifact@v4
         with:
           name: nuclei-omni-results
           path: |
             results_raw.txt
             results_high_value.json
-            final_report.json
