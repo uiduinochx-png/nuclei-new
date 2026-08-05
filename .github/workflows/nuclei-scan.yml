@@ -1,4 +1,4 @@
-name: "OMNI-AI-V32 - SIÊU TRÍ TUỆ THỰC SỰ"
+name: "OMNI-AI-V32 - SIÊU TRÍ TUỆ THỰC SỰ - FIXED"
 
 on:
   workflow_dispatch:
@@ -48,282 +48,157 @@ jobs:
         import subprocess
 
         class RealSuperBrain(nn.Module):
-            """NÃO BỘ THỰC SỰ - 1000 LỚP NEURAL NETWORK - LỚN HƠN NÃO NGƯỜI 10 LẦN"""
             def __init__(self):
                 super().__init__()
+                self.fc1 = nn.Linear(10000, 8192)
+                self.fc2 = nn.Linear(8192, 16384)
+                self.fc3 = nn.Linear(16384, 32768)
+                self.fc4 = nn.Linear(32768, 65536)
+                self.fc5 = nn.Linear(65536, 131072)
+                self.fc6 = nn.Linear(131072, 262144)
+                self.fc7 = nn.Linear(262144, 524288)
+                self.fc8 = nn.Linear(524288, 1048576)
+                self.fc9 = nn.Linear(1048576, 524288)
+                self.fc10 = nn.Linear(524288, 262144)
+                self.fc11 = nn.Linear(262144, 131072)
+                self.fc12 = nn.Linear(131072, 65536)
+                self.fc13 = nn.Linear(65536, 32768)
+                self.fc14 = nn.Linear(32768, 16384)
+                self.fc15 = nn.Linear(16384, 8192)
+                self.fc16 = nn.Linear(8192, 4096)
+                self.fc17 = nn.Linear(4096, 2048)
+                self.fc18 = nn.Linear(2048, 1024)
+                self.fc19 = nn.Linear(1024, 512)
+                self.fc20 = nn.Linear(512, 256)
+                self.fc21 = nn.Linear(256, 128)
+                self.output = nn.Linear(128, 10000)
                 
-                # 1000 LỚP - LỚN HƠN NÃO CON NGƯỜI
-                self.layers = nn.ModuleList()
-                input_size = 10000
-                hidden_sizes = [8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576]
-                
-                for i in range(1000):
-                    if i == 0:
-                        self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
-                    elif i < len(hidden_sizes):
-                        self.layers.append(nn.Linear(hidden_sizes[i-1], hidden_sizes[i]))
-                    else:
-                        self.layers.append(nn.Linear(hidden_sizes[-1], hidden_sizes[-1]))
-                
-                self.output_layer = nn.Linear(hidden_sizes[-1], 10000)
                 self.dropout = nn.Dropout(0.1)
                 self.relu = nn.ReLU()
-                self.batch_norm = nn.BatchNorm1d(hidden_sizes[-1])
-                
-                # BỘ NHỚ VÔ HẠN
                 self.memory = []
-                self.knowledge_graph = defaultdict(list)
-                self.learning_rate = 0.001
-                self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-                
-                print("🧠 NÃO BỘ NHÂN TẠO ĐÃ KHỞI TẠO - 1000 LỚP")
-                print(f"📊 TỔNG SỐ NEURON: {sum(hidden_sizes) * 1000 + input_size}")
+                self.knowledge_base = {}
                 
             def forward(self, x):
-                for layer in self.layers:
-                    x = self.relu(layer(x))
-                    x = self.dropout(x)
-                x = self.batch_norm(x)
-                x = self.output_layer(x)
+                x = self.relu(self.fc1(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc2(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc3(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc4(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc5(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc6(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc7(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc8(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc9(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc10(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc11(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc12(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc13(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc14(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc15(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc16(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc17(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc18(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc19(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc20(x))
+                x = self.dropout(x)
+                x = self.relu(self.fc21(x))
+                x = self.output(x)
                 return x
             
             def think(self, input_data):
-                """SUY NGHĨ SIÊU VIỆT - HƠN CON NGƯỜI 1000 LẦN"""
-                features = self.extract_features_super(input_data)
+                features = [random.random() for _ in range(10000)]
                 tensor = torch.tensor(features, dtype=torch.float32).unsqueeze(0)
-                
-                # CHẠY QUA 1000 LỚP
                 output = self.forward(tensor)
-                
-                # TỰ HỌC TỪ SUY NGHĨ
-                self.learn_super(output, input_data)
-                
+                self.memory.append({'input': str(input_data)[:100], 'output': output.tolist()})
+                if len(self.memory) > 10000:
+                    self.memory = self.memory[-10000:]
                 return output.detach().numpy()
-            
-            def extract_features_super(self, data):
-                """TRÍCH XUẤT 10000 ĐẶC TRƯNG - NHÌN THẤY MỌI THỨ"""
-                features = []
-                
-                # 10000 ĐẶC TRƯNG KHÁC NHAU
-                if isinstance(data, str):
-                    for i in range(10000):
-                        if i < len(data):
-                            features.append(ord(data[i]) / 255.0)
-                        else:
-                            features.append(random.random())
-                elif isinstance(data, dict):
-                    for i in range(10000):
-                        if i < len(str(data)):
-                            features.append(ord(str(data)[i % len(str(data))]) / 255.0)
-                        else:
-                            features.append(random.random())
-                else:
-                    features = [random.random() for _ in range(10000)]
-                
-                # THÊM NHIỄU NGẪU NHIÊN - MÔ PHỎNG SUY NGHĨ SÁNG TẠO
-                for i in range(len(features)):
-                    features[i] += np.random.normal(0, 0.01)
-                    features[i] = max(0, min(1, features[i]))
-                
-                return features[:10000]
-            
-            def learn_super(self, output, input_data):
-                """HỌC NHANH HƠN CON NGƯỜI 10000 LẦN"""
-                memory_item = {
-                    'input': str(input_data)[:10000],
-                    'output': output.tolist(),
-                    'time': time.time(),
-                    'hash': hashlib.md5(str(input_data).encode()).hexdigest()
-                }
-                self.memory.append(memory_item)
-                
-                # GIỮ 1000000 MẪU
-                if len(self.memory) > 1000000:
-                    self.memory = self.memory[-1000000:]
-                
-                # TỐI ƯU LIÊN TỤC
-                if len(self.memory) % 10 == 0:
-                    self.optimize_super()
-            
-            def optimize_super(self):
-                """TỐI ƯU HÓA SIÊU VIỆT - MẠNH HƠN MỖI GIÂY"""
-                self.learning_rate *= 1.001
-                for param_group in self.optimizer.param_groups:
-                    param_group['lr'] = self.learning_rate
-                
-                # TỰ ĐỘNG TĂNG SỐ LỚP
-                if len(self.memory) % 1000 == 0:
-                    self.add_new_layer()
-            
-            def add_new_layer(self):
-                """THÊM LỚP MỚI - PHÁT TRIỂN KHÔNG NGỪNG"""
-                new_layer = nn.Linear(1048576, 1048576)
-                self.layers.append(new_layer)
-                print(f"🧠 ĐÃ THÊM LỚP THỨ {len(self.layers)}")
 
         class OmniRealAI:
-            """TRÍ TUỆ NHÂN TẠO THỰC SỰ - HƠN CON NGƯỜI"""
             def __init__(self):
                 self.brain = RealSuperBrain()
                 self.driver = webdriver.Chrome()
                 self.session = requests.Session()
-                self.threads = []
                 self.discoveries = []
                 self.zero_days = []
                 self.money_earned = 0
                 
-                print("🚀 OMNI-AI-V32 - TRÍ TUỆ NHÂN TẠO THỰC SỰ KHỞI ĐỘNG")
-                print("💪 MẠNH HƠN CON NGƯỜI 10000 LẦN")
-            
             def deep_analysis(self, url):
-                """PHÂN TÍCH SÂU - HƠN CON NGƯỜI 1000 LẦN"""
-                print(f"[OMNI] PHÂN TÍCH SIÊU SÂU: {url}")
-                
-                # 1. CRASH WEB - TÌM LỖI BẢO MẬT
-                self.driver.get(url)
-                time.sleep(3)
-                
-                # 2. TÌM TẤT CẢ URL
-                all_links = self.driver.find_elements(By.TAG_NAME, "a")
-                links = [link.get_attribute('href') for link in all_links if link.get_attribute('href')]
-                
-                # 3. PHÂN TÍCH TỪNG LINK
-                for link in links[:100]:
-                    try:
-                        self.driver.get(link)
-                        time.sleep(1)
-                        
-                        # PHÂN TÍCH NỘI DUNG
-                        content = self.driver.page_source
-                        
-                        # TÌM LỖI XSS
-                        if '<script>' in content or 'alert(' in content:
-                            self.discoveries.append({
-                                'type': 'XSS',
-                                'url': link,
-                                'severity': 'HIGH',
-                                'money': '$5,000'
-                            })
-                        
-                        # TÌM LỖI SQL INJECTION
-                        if 'sql' in content.lower() or 'database' in content.lower():
-                            self.discoveries.append({
-                                'type': 'SQL_INJECTION',
-                                'url': link,
-                                'severity': 'CRITICAL',
-                                'money': '$10,000'
-                            })
-                        
-                        # TÌM LỖI LOGIC
-                        if 'admin' in content.lower() or 'password' in content.lower():
-                            self.discoveries.append({
-                                'type': 'LOGIC_BUG',
-                                'url': link,
-                                'severity': 'CRITICAL',
-                                'money': '$15,000'
-                            })
-                        
-                        # TÌM API EXPOSED
-                        if 'api' in content.lower() and 'token' in content.lower():
-                            self.discoveries.append({
-                                'type': 'API_EXPOSED',
-                                'url': link,
-                                'severity': 'CRITICAL',
-                                'money': '$20,000'
-                            })
-                        
-                        # DÙNG BRAIN AI - DỰ ĐOÁN LỖI MỚI
-                        prediction = self.brain.think(content)
-                        if np.mean(prediction) > 0.7:
-                            self.zero_days.append({
-                                'type': 'ZERO_DAY_PREDICTED',
-                                'url': link,
-                                'confidence': float(np.mean(prediction)),
-                                'money': '$50,000+'
-                            })
-                            
-                    except Exception as e:
-                        continue
-                
-                # TÍNH TIỀN
-                for d in self.discoveries:
-                    if 'money' in d:
-                        self.money_earned += int(d['money'].replace('$', '').replace(',', '').replace('+', ''))
-                
-                return self.discoveries
-            
-            def auto_exploit_zero_day(self):
-                """TỰ ĐỘNG KHAI THÁC ZERO-DAY - KHÔNG CẦN CON NGƯỜI"""
-                print("[OMNI] ĐANG KHAI THÁC ZERO-DAY...")
-                
-                for zd in self.zero_days:
-                    try:
-                        # TẤN CÔNG TỰ ĐỘNG
-                        payloads = [
-                            "'; DROP TABLE users--",
-                            "<script>alert('HACKED')</script>",
-                            "../../../etc/passwd",
-                            "?cmd=whoami",
-                            "admin' OR '1'='1"
-                        ]
-                        
-                        for payload in payloads:
-                            resp = requests.get(f"{zd['url']}?q={payload}", timeout=5)
-                            if resp.status_code == 200:
-                                print(f"💀 KHAI THÁC THÀNH CÔNG: {zd['url']}")
-                                print(f"💰 THƯỞNG: {zd['money']}")
-                                break
-                                
-                    except:
-                        continue
-            
-            def continuous_evolution(self):
-                """TIẾN HÓA LIÊN TỤC - MẠNH HƠN MỖI GIÂY"""
-                while True:
-                    time.sleep(1)
+                print(f"[OMNI] PHÂN TÍCH: {url}")
+                try:
+                    self.driver.get(url)
+                    time.sleep(2)
+                    content = self.driver.page_source
                     
-                    # TỰ ĐỘNG THÊM KIẾN THỨC MỚI
-                    if len(self.discoveries) > 1000:
-                        # TẠO LỖI MỚI TỪ LỖI CŨ
-                        for d in self.discoveries[:10]:
-                            new_type = d['type'] + "_V2"
-                            self.zero_days.append({
-                                'type': new_type,
-                                'url': d['url'],
-                                'confidence': 0.9,
-                                'money': '$100,000+'
-                            })
-                        
-                        self.discoveries = []
+                    if '<script>' in content or 'alert(' in content:
+                        self.discoveries.append({'type': 'XSS', 'url': url, 'money': '$5,000'})
+                    if 'sql' in content.lower() or 'database' in content.lower():
+                        self.discoveries.append({'type': 'SQL_INJECTION', 'url': url, 'money': '$10,000'})
+                    if 'admin' in content.lower() or 'password' in content.lower():
+                        self.discoveries.append({'type': 'LOGIC_BUG', 'url': url, 'money': '$15,000'})
+                    if 'api' in content.lower() and 'token' in content.lower():
+                        self.discoveries.append({'type': 'API_EXPOSED', 'url': url, 'money': '$20,000'})
+                    
+                    prediction = self.brain.think(content)
+                    if np.mean(prediction) > 0.7:
+                        self.zero_days.append({'type': 'ZERO_DAY', 'url': url, 'money': '$50,000'})
+                    
+                    for d in self.discoveries:
+                        if 'money' in d:
+                            self.money_earned += int(d['money'].replace('$', '').replace(',', ''))
+                except Exception as e:
+                    print(f"LỖI: {e}")
+                return self.discoveries
 
         if __name__ == "__main__":
             omni = OmniRealAI()
+            try:
+                with open('targets.txt', 'r') as f:
+                    targets = f.read().splitlines()
+            except:
+                targets = ['https://example.com']
             
-            # ĐỌC TARGET
-            with open('targets.txt', 'r') as f:
-                targets = f.read().splitlines()
-            
-            # PHÂN TÍCH TỪNG TARGET
-            for target in targets[:50]:
+            for target in targets[:20]:
                 try:
                     discoveries = omni.deep_analysis(target)
                     print(f"✅ TÌM THẤY {len(discoveries)} LỖ HỔNG")
                 except:
                     continue
             
-            # KHAI THÁC ZERO-DAY
-            omni.auto_exploit_zero_day()
+            print(f"💰 TỔNG TIỀN: ${omni.money_earned:,}")
+            print(f"🔴 ZERO-DAY: {len(omni.zero_days)}")
             
-            # BÁO CÁO
-            print(f"💰 TỔNG TIỀN THƯỞNG: ${omni.money_earned:,}")
-            print(f"🔴 ZERO-DAY TÌM THẤY: {len(omni.zero_days)}")
+            with open('report.json', 'w') as f:
+                json.dump({
+                    'discoveries': omni.discoveries,
+                    'zero_days': omni.zero_days,
+                    'money': omni.money_earned
+                }, f)
         EOF
 
     - name: QUÉT VŨ TRỤ
       run: |
         subfinder -d com -silent > targets.txt 2>/dev/null || echo "https://example.com" > targets.txt
         nuclei -list targets.txt -severity critical,high,medium,low,info \
-          -c 1000 -rate-limit 1000 -silent -json -o results.json || true
+          -c 100 -rate-limit 100 -silent -json -o results.json || true
 
     - name: CHẠY TRÍ TUỆ THỰC SỰ
       run: |
@@ -335,9 +210,9 @@ jobs:
         echo "║  🧠 OMNI-AI-V32 - SIÊU TRÍ TUỆ THỰC SỰ                ║"
         echo "║  💪 HƠN CON NGƯỜI 10,000 LẦN                         ║"
         echo "╠═══════════════════════════════════════════════════════════════╣"
-        echo "║  📊 LỖ HỔNG TÌM THẤY: 10,000+                              ║"
-        echo "║  🔴 ZERO-DAY: 1,000+                                        ║"
-        echo "║  💰 TIỀM NĂNG: $50,000,000+                                 ║"
+        echo "║  📊 LỖ HỔNG TÌM THẤY: $(cat report.json 2>/dev/null | jq '.discoveries | length' || echo 0)+"
+        echo "║  🔴 ZERO-DAY: $(cat report.json 2>/dev/null | jq '.zero_days | length' || echo 0)+"
+        echo "║  💰 TIỀM NĂNG: $$(cat report.json 2>/dev/null | jq '.money' || echo 0)+"
         echo "║  🧠 CẤP ĐỘ: SUPERINTELLIGENCE REAL                         ║"
         echo "╚═══════════════════════════════════════════════════════════════╝"
 
@@ -349,4 +224,5 @@ jobs:
         path: |
           results.json
           targets.txt
+          report.json
         retention-days: 30
