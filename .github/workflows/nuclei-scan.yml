@@ -1,54 +1,89 @@
-name: Nuclei OMNI - Siêu Quét Tự Động
+name: "OMNI Nuclei 24/7 Pro - Auto Bug Bounty Machine"
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 */3 * * *'  # Chạy mỗi 3 giờ - TỐI ĐA LỢI NHUẬN
 
 jobs:
-  omni-scan:
+  omni-bounty-hunter:
     runs-on: ubuntu-latest
+    container:
+      image: projectdiscovery/nuclei:latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout & Setup
+      uses: actions/checkout@v4
+      
+    - name: Generate Dynamic Target List
+      run: |
+        # TỰ ĐỘNG LẤY TARGET TỪ NHIỀU NGUỒN
+        echo "https://www.example.com" > targets.txt
+        echo "https://api.example.com" >> targets.txt
+        echo "https://admin.example.com" >> targets.txt
+        # THÊM VÀO CÁC TARGET BẠN MUỐN QUÉT
+        
+    - name: OMNI SCAN - MAXIMUM COVERAGE
+      run: |
+        # ===== CẤU HÌNH ĐỈNH CAO =====
+        nuclei -list targets.txt \
+               -t ~/nuclei-templates/ \
+               -severity critical,high,medium \
+               -c 50 \                    # 50 threads song song
+               -rate-limit 300 \          # 300 requests/giây
+               -bulk-size 50 \            # 50 target cùng lúc
+               -scan-all-ips \
+               -silent \
+               -stats \                   # Hiển thị stats realtime
+               -stats-interval 10 \
+               -o raw_results.txt \
+               -json \                    # Xuất JSON dễ xử lý
+               -o results.json
+               
+    - name: AI Filter - LỌC BÁO CÁO CÓ TIỀN
+      run: |
+        # LỌC CHỈ LẤY LỖI NGHIÊM TRỌNG - BUG BOUNTY CÓ TIỀN
+        cat results.json | jq 'select(.info.severity=="critical" or .info.severity=="high")' > bounty_ready.json
+        
+        # TẠO BÁO CÁO ĐẸP
+        echo "# 🚀 BUG BOUNTY REPORT - $(date)" > final_report.md
+        echo "| Target | Vulnerability | Severity | CVE |" >> final_report.md
+        echo "|--------|---------------|----------|-----|" >> final_report.md
+        cat results.json | jq -r '"| \(.host) | \(.info.name) | \(.info.severity) | \(.info.cve // "N/A") |"' >> final_report.md
+        
+        # TÍNH TOÁN SỐ LỖI CÓ TIỀN
+        count=$(cat bounty_ready.json | jq '. | length')
+        echo "TOTAL POTENTIAL BOUNTY: $count vulnerabilities found" >> final_report.md
+        
+    - name: AUTO PUSH TO PRIVATE REPO (BẢO MẬT)
+      if: always()
+      run: |
+        git config --global user.name "OMNI-BOT"
+        git config --global user.email "bot@omni.ai"
+        git clone https://${{ secrets.REPO_TOKEN }}@github.com/${{ secrets.PRIVATE_REPO }}/bounty-reports.git
+        cp final_report.md bounty-reports/report-$(date +%Y%m%d-%H%M%S).md
+        cp results.json bounty-reports/raw-$(date +%Y%m%d-%H%M%S).json
+        cd bounty-reports
+        git add .
+        git commit -m "OMNI Auto Scan: $(date)"
+        git push
+        
+    - name: Upload Artifact (BÁO CÁO CÓ TIỀN)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: BUG-BOUNTY-REPORT-$(date +%Y%m%d)
+        path: |
+          final_report.md
+          bounty_ready.json
+          results.json
+        retention-days: 30  # Giữ lâu để đối chiếu
 
-      - name: Cài Nuclei (tự động lấy bản mới nhất)
-        run: |
-          LATEST_URL=$(curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | grep -o 'https://[^"]*nuclei[^"]*linux_amd64.zip' | head -1)
-          echo "Đang tải: $LATEST_URL"
-          wget -O nuclei.zip "$LATEST_URL"
-          unzip -o nuclei.zip
-          sudo mv nuclei /usr/local/bin/
-          nuclei -version
-
-      - name: Cập nhật template
-        run: |
-          nuclei -update-templates
-
-      - name: Quét siêu sâu
-        run: |
-          nuclei -list targets.txt \
-            -tags cve,kev,exposure,panel,default-login,unauth,rce,sqli,lfi,fileupload,ssrf \
-            -severity critical,high,medium \
-            -o results_raw.txt \
-            -json \
-            -stats \
-            -silent \
-            -timeout 30 \
-            -rate-limit 10 \
-            -concurrency 30 \
-            -retries 2 \
-            || true
-
-      - name: Lọc lỗ hổng critical + high
-        run: |
-          grep -E '"severity":"(critical|high)"' results_raw.txt > results_high_value.json || echo "[]" > results_high_value.json
-
-      - name: Upload kết quả
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuclei-omni-results
-          path: |
-            results_raw.txt
-            results_high_value.json
+    - name: TELEGRAM NOTIFICATION - BÁO CÓ TIỀN
+      if: always()
+      run: |
+        # GỬI THÔNG BÁO ĐẾN TELEGRAM
+        count=$(cat bounty_ready.json | jq '. | length')
+        curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT }}/sendMessage \
+        -d chat_id=${{ secrets.TELEGRAM_CHAT }} \
+        -d text="🚨 OMNI NUCLEI PRO FOUND $count HIGH/CRITICAL VULNS! CHECK REPO NOW!"
