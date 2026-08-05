@@ -1,152 +1,121 @@
-name: "OMNI-AI-V32 - SIÊU TRÍ TUỆ - FIXED"
+name: "OMNI-AI-FINAL"
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */1 * * *'
+    - cron: '0 */2 * * *'
 
 jobs:
-  omni-real-ai:
+  scan:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: CÀI ĐẶT - KHÔNG LỖI
+    - name: Cài đặt công cụ
       run: |
         sudo apt-get update
-        sudo apt-get install -y jq curl wget git python3 python3-pip \
-          chromium-browser chromium-chromedriver
-
-        pip3 install torch numpy selenium requests beautifulsoup4 \
-          transformers scikit-learn pandas
-
+        sudo apt-get install -y jq curl python3 python3-pip
+        pip3 install requests
         curl -s https://raw.githubusercontent.com/projectdiscovery/nuclei/main/install.sh | bash
         sudo mv nuclei /usr/local/bin/
 
-    - name: CHẠY AI SIÊU VIỆT
+    - name: Tạo target
       run: |
-        python3 << 'EOF'
-        import requests
-        import time
-        import json
-        import random
-        import subprocess
-        import sys
-
-        print("🚀 OMNI-AI-V32 - TRÍ TUỆ NHÂN TẠO THỰC SỰ")
-        print("💪 KHỞI ĐỘNG THÀNH CÔNG - KHÔNG LỖI")
-        
-        # ĐỌC TARGET
-        targets = []
-        try:
-            with open('targets.txt', 'r') as f:
-                targets = f.read().splitlines()
-        except:
-            targets = ['https://example.com']
-        
-        print(f"✅ TÌM THẤY {len(targets)} TARGET")
-        
-        # QUÉT MỖI TARGET
-        discoveries = []
-        for target in targets[:10]:
-            try:
-                print(f"[*] ĐANG QUÉT: {target}")
-                resp = requests.get(f"https://{target}", timeout=5)
-                
-                if resp.status_code == 200:
-                    content = resp.text
-                    
-                    # PHÁT HIỆN LỖI
-                    if 'sql' in content.lower():
-                        discoveries.append({
-                            'target': target,
-                            'type': 'SQL_INJECTION',
-                            'severity': 'CRITICAL',
-                            'money': '$10,000'
-                        })
-                    
-                    if '<script>' in content.lower():
-                        discoveries.append({
-                            'target': target,
-                            'type': 'XSS',
-                            'severity': 'HIGH',
-                            'money': '$5,000'
-                        })
-                    
-                    if 'admin' in content.lower():
-                        discoveries.append({
-                            'target': target,
-                            'type': 'ADMIN_PANEL',
-                            'severity': 'CRITICAL',
-                            'money': '$15,000'
-                        })
-                    
-                    if 'api' in content.lower():
-                        discoveries.append({
-                            'target': target,
-                            'type': 'API_EXPOSED',
-                            'severity': 'MEDIUM',
-                            'money': '$2,000'
-                        })
-                    
-            except:
-                continue
-        
-        # TÍNH TỔNG TIỀN
-        total_money = 0
-        for d in discoveries:
-            money = d.get('money', '$0').replace('$', '').replace(',', '')
-            if money.isdigit():
-                total_money += int(money)
-        
-        print(f"\n💰 TỔNG TIỀN PHÁT HIỆN: ${total_money:,}")
-        print(f"📊 TỔNG LỖ HỔNG: {len(discoveries)}")
-        
-        # LƯU BÁO CÁO
-        with open('report.json', 'w') as f:
-            json.dump({
-                'discoveries': discoveries,
-                'total_money': total_money,
-                'total_vulns': len(discoveries)
-            }, f, indent=2)
-        
-        print("\n✅ BÁO CÁO ĐÃ TẠO XONG")
+        cat > targets.txt << 'EOF'
+        https://example.com
+        https://google.com
+        https://github.com
+        https://facebook.com
+        https://twitter.com
+        https://linkedin.com
+        https://youtube.com
+        https://instagram.com
+        https://tiktok.com
+        https://reddit.com
         EOF
 
-    - name: NUCLEI - QUÉT BỔ SUNG
+    - name: Quét Nuclei
       run: |
-        nuclei -list targets.txt \
-               -severity critical,high,medium \
-               -c 50 \
-               -rate-limit 50 \
-               -silent \
-               -json \
-               -o nuclei_results.json || true
+        nuclei -list targets.txt -severity critical,high,medium -c 30 -silent -json -o ketqua.json || true
 
-    - name: HIỂN THỊ KẾT QUẢ
+    - name: Phân tích kết quả
       run: |
-        echo "╔═══════════════════════════════════════════════════════════════╗"
-        echo "║  🧠 OMNI-AI-V32 - KẾT QUẢ QUÉT                         ║"
-        echo "╠═══════════════════════════════════════════════════════════════╣"
+        python3 << 'PYTHON'
+        import json
+        import sys
         
-        if [ -f report.json ]; then
-          cat report.json | jq -r '
-            "║  📊 LỖ HỔNG: \(.total_vulns)+                           ║",
-            "║  💰 TIỀM NĂNG: $\(.total_money)+                          ║"
-          '
-        fi
+        vulnerabilities = []
+        try:
+            with open('ketqua.json', 'r') as f:
+                for line in f:
+                    try:
+                        data = json.loads(line.strip())
+                        if 'info' in data:
+                            vuln = {
+                                'host': data.get('host', 'unknown'),
+                                'name': data['info'].get('name', 'unknown'),
+                                'severity': data['info'].get('severity', 'unknown'),
+                                'cve': data['info'].get('cve', 'N/A')
+                            }
+                            vulnerabilities.append(vuln)
+                    except:
+                        pass
+        except:
+            pass
         
-        echo "╚═══════════════════════════════════════════════════════════════╝"
+        # Đếm theo severity
+        critical = sum(1 for v in vulnerabilities if v['severity'] == 'critical')
+        high = sum(1 for v in vulnerabilities if v['severity'] == 'high')
+        medium = sum(1 for v in vulnerabilities if v['severity'] == 'medium')
+        
+        # In báo cáo
+        print("=" * 60)
+        print("  🚀 OMNI-AI - BÁO CÁO LỖ HỔNG")
+        print("=" * 60)
+        print(f"  Thời gian: $(date)")
+        print(f"  Tổng lỗi: {len(vulnerabilities)}")
+        print(f"  - Critical: {critical}")
+        print(f"  - High: {high}")
+        print(f"  - Medium: {medium}")
+        print("=" * 60)
+        
+        if vulnerabilities:
+            print("\n📋 DANH SÁCH LỖI:")
+            for v in vulnerabilities[:10]:
+                print(f"  [{v['severity'].upper()}] {v['host']}")
+                print(f"    → {v['name']}")
+                if v['cve'] != 'N/A':
+                    print(f"    → CVE: {v['cve']}")
+                print()
+        
+        # Lưu report
+        with open('report.json', 'w') as f:
+            json.dump({
+                'total': len(vulnerabilities),
+                'critical': critical,
+                'high': high,
+                'medium': medium,
+                'list': vulnerabilities
+            }, f, indent=2)
+        
+        PYTHON
+
+    - name: Hiển thị báo cáo
+      run: |
+        echo "========================================"
+        echo "  ✅ QUÉT HOÀN TẤT"
+        echo "========================================"
+        cat report.json 2>/dev/null || echo "Chưa có dữ liệu"
 
     - name: Upload
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: OMNI-REPORT
+        name: Bao-cao
         path: |
+          ketqua.json
           report.json
-          nuclei_results.json
           targets.txt
-        retention-days: 30
+        retention-days: 7
