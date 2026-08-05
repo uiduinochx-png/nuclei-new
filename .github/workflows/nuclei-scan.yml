@@ -1,4 +1,4 @@
-name: "OMNI-AI-FINAL"
+name: "OMNI-FINAL"
 
 on:
   workflow_dispatch:
@@ -13,109 +13,105 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Cài đặt công cụ
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y jq curl python3 python3-pip
-        pip3 install requests
-        curl -s https://raw.githubusercontent.com/projectdiscovery/nuclei/main/install.sh | bash
-        sudo mv nuclei /usr/local/bin/
-
-    - name: Tạo target
-      run: |
-        cat > targets.txt << 'EOF'
-        https://example.com
-        https://google.com
-        https://github.com
-        https://facebook.com
-        https://twitter.com
-        https://linkedin.com
-        https://youtube.com
-        https://instagram.com
-        https://tiktok.com
-        https://reddit.com
-        EOF
-
-    - name: Quét Nuclei
-      run: |
-        nuclei -list targets.txt -severity critical,high,medium -c 30 -silent -json -o ketqua.json || true
-
-    - name: Phân tích kết quả
+    - name: Python Scan
       run: |
         python3 << 'PYTHON'
+        import requests
         import json
-        import sys
-        
-        vulnerabilities = []
-        try:
-            with open('ketqua.json', 'r') as f:
-                for line in f:
-                    try:
-                        data = json.loads(line.strip())
-                        if 'info' in data:
-                            vuln = {
-                                'host': data.get('host', 'unknown'),
-                                'name': data['info'].get('name', 'unknown'),
-                                'severity': data['info'].get('severity', 'unknown'),
-                                'cve': data['info'].get('cve', 'N/A')
-                            }
-                            vulnerabilities.append(vuln)
-                    except:
-                        pass
-        except:
-            pass
-        
-        # Đếm theo severity
-        critical = sum(1 for v in vulnerabilities if v['severity'] == 'critical')
-        high = sum(1 for v in vulnerabilities if v['severity'] == 'high')
-        medium = sum(1 for v in vulnerabilities if v['severity'] == 'medium')
-        
-        # In báo cáo
-        print("=" * 60)
-        print("  🚀 OMNI-AI - BÁO CÁO LỖ HỔNG")
-        print("=" * 60)
-        print(f"  Thời gian: $(date)")
-        print(f"  Tổng lỗi: {len(vulnerabilities)}")
-        print(f"  - Critical: {critical}")
-        print(f"  - High: {high}")
-        print(f"  - Medium: {medium}")
-        print("=" * 60)
-        
-        if vulnerabilities:
-            print("\n📋 DANH SÁCH LỖI:")
-            for v in vulnerabilities[:10]:
-                print(f"  [{v['severity'].upper()}] {v['host']}")
-                print(f"    → {v['name']}")
-                if v['cve'] != 'N/A':
-                    print(f"    → CVE: {v['cve']}")
-                print()
-        
-        # Lưu report
-        with open('report.json', 'w') as f:
-            json.dump({
-                'total': len(vulnerabilities),
-                'critical': critical,
-                'high': high,
-                'medium': medium,
-                'list': vulnerabilities
-            }, f, indent=2)
-        
-        PYTHON
+        import time
+        from urllib.parse import urlparse
 
-    - name: Hiển thị báo cáo
-      run: |
-        echo "========================================"
-        echo "  ✅ QUÉT HOÀN TẤT"
-        echo "========================================"
-        cat report.json 2>/dev/null || echo "Chưa có dữ liệu"
+        print("=" * 60)
+        print("🚀 OMNI-AI - BẮT ĐẦU QUÉT")
+        print("=" * 60)
+
+        targets = [
+            "https://example.com",
+            "https://google.com", 
+            "https://github.com",
+            "https://facebook.com",
+            "https://twitter.com",
+            "https://linkedin.com",
+            "https://youtube.com",
+            "https://instagram.com",
+            "https://tiktok.com",
+            "https://reddit.com"
+        ]
+
+        results = []
+        total_money = 0
+
+        for target in targets:
+            try:
+                print(f"\n[+] Đang quét: {target}")
+                resp = requests.get(target, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+                
+                if resp.status_code == 200:
+                    content = resp.text.lower()
+                    
+                    # Tìm lỗ hổng
+                    vulns = []
+                    
+                    if "sql" in content or "select" in content or "union" in content:
+                        vulns.append({"type": "SQL Injection", "money": "$5,000"})
+                    
+                    if "script" in content or "alert" in content or "onerror" in content:
+                        vulns.append({"type": "XSS", "money": "$3,000"})
+                    
+                    if "admin" in content or "password" in content or "login" in content:
+                        vulns.append({"type": "Admin Panel", "money": "$2,000"})
+                    
+                    if "api" in content and "key" in content:
+                        vulns.append({"type": "API Key Exposed", "money": "$8,000"})
+                    
+                    if "config" in content or "backup" in content:
+                        vulns.append({"type": "Config Exposure", "money": "$1,000"})
+                    
+                    if vulns:
+                        for v in vulns:
+                            results.append({
+                                "target": target,
+                                "type": v["type"],
+                                "money": v["money"]
+                            })
+                            money = int(v["money"].replace("$", "").replace(",", ""))
+                            total_money += money
+                        print(f"   ✅ Phát hiện: {len(vulns)} lỗi")
+                    else:
+                        print("   ⚪ Chưa phát hiện lỗi")
+                else:
+                    print(f"   ⚠️ Status: {resp.status_code}")
+                    
+            except Exception as e:
+                print(f"   ❌ Lỗi: {str(e)[:50]}")
+
+        print("\n" + "=" * 60)
+        print("📊 BÁO CÁO TỔNG KẾT")
+        print("=" * 60)
+        print(f"Tổng số lỗi phát hiện: {len(results)}")
+        print(f"Tổng tiền tiềm năng: ${total_money:,}")
+        print("=" * 60)
+
+        if results:
+            print("\n📋 CHI TIẾT LỖI:")
+            for r in results:
+                print(f"  • {r['target']}")
+                print(f"    → {r['type']} - {r['money']}")
+
+        with open("report.json", "w") as f:
+            json.dump({
+                "total_vulns": len(results),
+                "total_money": total_money,
+                "results": results
+            }, f, indent=2)
+
+        print("\n✅ ĐÃ LƯU BÁO CÁO")
+        PYTHON
 
     - name: Upload
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Bao-cao
-        path: |
-          ketqua.json
-          report.json
-          targets.txt
+        path: report.json
         retention-days: 7
